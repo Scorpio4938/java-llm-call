@@ -10,7 +10,7 @@ plugins {
     id 'java-library'
 }
 
-version = '1.0.0'
+version = project.project_version
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -28,6 +28,12 @@ dependencies {
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation libs.guava
+
+    //Env
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+
+    implementation 'org.json:json:20240205'
+    implementation 'com.google.code.gson:gson:2.11.0'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

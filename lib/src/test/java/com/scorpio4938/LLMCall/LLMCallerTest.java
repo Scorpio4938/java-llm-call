@@ -6,9 +6,9 @@ package com.scorpio4938.LLMCall;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class LibraryTest {
+class LLMCallerTest {
     @Test void someLibraryMethodReturnsTrue() {
-        Library classUnderTest = new Library();
+        LLMCaller classUnderTest = new LLMCaller();
         assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'");
     }
 }
