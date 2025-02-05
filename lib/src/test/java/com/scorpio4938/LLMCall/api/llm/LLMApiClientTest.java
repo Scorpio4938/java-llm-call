@@ -1,5 +1,6 @@
 package com.scorpio4938.LLMCall.api.llm;
 
+import com.scorpio4938.LLMCall.service.utils.debug.Debugger;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.AfterEach;
@@ -30,7 +31,7 @@ public class LLMApiClientTest {
         server.createContext("/", (HttpExchange exchange) -> {
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 // Define a fixed JSON response that the LLMResponse parser is expected to handle.
-                String response = "{\"firstMessageContent\": \"Hello, test!\"}";
+                String response = "{\"choices\": [{\"message\": {\"content\": \"Hello, test!\"}}]}";
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(200, response.getBytes().length);
                 try (OutputStream os = exchange.getResponseBody()) {
@@ -97,5 +98,28 @@ public class LLMApiClientTest {
 
         // Verify that the first message's content is as expected.
         assertEquals("Hello, test!", result);
+        // Debugger.log("Call LLM Test Response: " + result);
+    }
+
+    @Test
+    public void testCallLLM_Ollama() throws Exception {
+        // Create a provider targeting our local test HTTP server.
+        Providers providers = new Providers();
+        Provider ollamaProvider = providers.getProvider("OLLAMA");
+
+        // Create an instance of LLMApiClient with a test maxTokens value.
+        LLMApiClient client = new LLMApiClient(ollamaProvider, 50);
+
+        // Create a dummy data map. The keys/values here will be sorted in the request.
+        Map<String, String> data = Map.of(
+                "role", "user",
+                "content", "hello"
+        );
+
+        // Call the LLM client which sends the HTTP request and parse the JSON response.
+        String result = client.callLLM("deepseek-r1:1.5b", data);
+
+        // Log the result using the Debugger class.
+        Debugger.log("OLLAMA Response: " + result);
     }
 } 
