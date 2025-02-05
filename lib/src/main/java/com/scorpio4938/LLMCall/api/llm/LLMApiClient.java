@@ -2,8 +2,6 @@ package com.scorpio4938.LLMCall.api.llm;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.scorpio4938.LLMCall.service.utils.MapSorter;
 import com.scorpio4938.LLMCall.service.utils.debug.Debugger;
 
@@ -17,79 +15,62 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * llm api client.
- *
+ * Simplified LLM API Client.
  */
 public class LLMApiClient {
-    private Provider provider;
-    private int maxTokens;
+    private final Provider provider;
+    private final int maxTokens;
+    private static final Gson GSON = new GsonBuilder().create();
 
-    private Gson gson = new GsonBuilder().create();
-
-    // Constructor takes the  provider (OpenAI, Anthropic, etc.) and maxTokens (Default 100)
-    public LLMApiClient(Provider provider1, @Nullable Integer maxTokens) {
-        this.provider = provider1;
+    // Constructor: accept provider and optional maxTokens (default: 100)
+    public LLMApiClient(Provider provider, @Nullable Integer maxTokens) {
+        this.provider = provider;
         this.maxTokens = (maxTokens != null) ? maxTokens : 100;
     }
 
-    private String buildMessage(String model, Map<String, String> map) {
-
+    // Build the JSON request body from the model and message map.
+    private String buildRequestBody(String model, Map<String, String> data) {
+        Map<String, String> sortedData = MapSorter.sortByKeys(data);
         List<LLMRequest.Message> messages = new ArrayList<>();
-        Map<String, String> sorted = MapSorter.sortByKeys(map);
-
-        for (Map.Entry<String, String> entry : sorted.entrySet()) {
+        for (Map.Entry<String, String> entry : sortedData.entrySet()) {
             messages.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
         }
-
-        return this.gson.toJson(new LLMRequest(this.provider.getModel(model), messages, this.maxTokens));
+        LLMRequest request = new LLMRequest(provider.getModel(model), messages, maxTokens);
+        return GSON.toJson(request);
     }
 
-    // Send the request based on provider and model
-    private String sendRequest1(String requestBody) throws Exception {
-        // Get the appropriate API URL based on the provider
-        String apiUrl = this.provider.getUrl();
-
-        // Create HttpClient
-        HttpClient client = HttpClient.newHttpClient();
-
-        // Create HttpRequest
+    // Send HTTP request to the provider's API.
+    private String sendRequest(String requestBody) throws Exception {
+        String apiUrl = provider.getUrl();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + this.provider.getKey())
+                .header("Authorization", "Bearer " + provider.getKey())
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
-
-        // Send the request and get the response
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Debug
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
         Debugger.log("Request Headers: " + request.headers());
         Debugger.log("Response body: " + response.body());
-
-        // Return the response body
         return response.body();
     }
 
-    private String response(String response) {
-        LLMResponse llmResponse = this.gson.fromJson(response, LLMResponse.class);
-        return llmResponse.getFirstMessageContent();
-    }
-
     /**
-     * Call the LLM with the given model and message.
+     * Call the LLM with the given model and message map.
      *
      * @param model   The model to use.
-     * @param message The message to send to the LLM.
-     * @return The response from the LLM.
-     * @throws Exception If there is an error sending the request.
+     * @param data    The message data.
+     * @return The content of the first message in the response.
+     * @throws Exception If there is an error while sending the request.
      */
-    public String callLLM(String model, Map<String, String> message) throws Exception {
-        return this.response(this.sendRequest1(this.buildMessage(model, message)));
+    public String callLLM(String model, Map<String, String> data) throws Exception {
+        String requestBody = buildRequestBody(model, data);
+        String responseBody = sendRequest(requestBody);
+        LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
+        return response.getFirstMessageContent();
     }
 
-    // Getters
     public int getMaxTokens() {
-        return this.maxTokens;
+        return maxTokens;
     }
 }
