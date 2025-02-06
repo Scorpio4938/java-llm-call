@@ -19,6 +19,7 @@
   // "java.import.synchronizeAutomaticallyOnWorkspaceChange": true,
   // "java.import.synchronizeAutomaticallyOnWorkspaceChangeDelay": 300,
   "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic",
   // "terminal.integrated.cwd": "${workspaceFolder}",
   // "java.rootPath": "${workspaceFolder}",
   // "java.project.sourcePaths": [

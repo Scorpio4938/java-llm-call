@@ -10,7 +10,7 @@ plugins {
     id 'java-library'
 }
 
-version = project.project_version
+version = project.project_version + "." + project.release_number
 
 repositories {
     // Use Maven Central for resolving dependencies.
