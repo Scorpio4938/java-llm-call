@@ -1,7 +1,6 @@
 package com.scorpio4938.LLMCall.api.llm;
 
 import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +11,6 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.time.Duration;
 import java.net.http.HttpClient;
-import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 
