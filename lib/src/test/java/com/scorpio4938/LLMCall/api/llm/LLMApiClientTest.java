@@ -92,18 +92,18 @@ public class LLMApiClientTest {
     @Test
     public void testRealOllamaCall() throws Exception {
         // Verify Ollama is running
-        try {
-            HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:11434"))
-                    .GET()
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-        } catch (Exception e) {
-            System.err.println("Ollama is not running. Please start it with 'ollama serve'");
-            return; // Skip test if Ollama isn't running
-        }
+        // try {
+        //     HttpClient.newHttpClient().send(
+        //         HttpRequest.newBuilder()
+        //             .uri(URI.create("http://localhost:11434"))
+        //             .GET()
+        //             .build(),
+        //         HttpResponse.BodyHandlers.ofString()
+        //     );
+        // } catch (Exception e) {
+        //     System.err.println("Ollama is not running. Please start it with 'ollama serve'");
+        //     return; // Skip test if Ollama isn't running
+        // }
 
         // Create the Ollama provider
         Providers providers = new Providers();
@@ -129,11 +129,6 @@ public class LLMApiClientTest {
             assertFalse(response.isEmpty());
             System.out.println("Ollama response: " + response);
         } catch (Exception e) {
-            System.err.println("Ollama API call failed. Make sure:");
-            System.err.println("1. Ollama is running locally ('ollama serve')");
-            System.err.println("2. The model 'deepseek-r1:1.5b' is available ('ollama list')");
-            System.err.println("3. The Ollama API is accessible at " + ollamaProvider.getUrl());
-            System.err.println("If the model isn't available, run: ollama pull deepseek-r1:1.5b");
             throw e;
         }
     }
@@ -163,10 +158,6 @@ public class LLMApiClientTest {
             assertFalse(response.isEmpty());
             System.out.println("OpenRouter response: " + response);
         } catch (Exception e) {
-            System.err.println("OpenRouter API call failed. Make sure:");
-            System.err.println("1. You have a valid OPENROUTER_API_KEY in your environment");
-            System.err.println("2. The model 'openai/gpt-3.5-turbo' is available");
-            System.err.println("3. The OpenRouter API is accessible at " + openRouterProvider.getUrl());
             throw e;
         }
     }
