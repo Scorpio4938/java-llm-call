@@ -25,7 +25,7 @@ public class Providers {
                 List.of("google/gemini-exp-1206:free", "google/gemini-2.0-flash-exp:free",
 
                         "meta-llama/llama-3.2-1b-instruct:free"));
-        this.addProviderWithV1("OLLAMA", "http://192.168.3.113:11434", null,
+        this.addProviderWithV1("OLLAMA", "http://localhost:11434", null,
                 List.of("deepseek-r1:1.5b", "qwen2.5:0.5b", "qwen2.5-coder:3b", "llama3.2:3b"));
 
     }
@@ -57,6 +57,36 @@ public class Providers {
     public void addProviderWithV1(String provider, String baseUrl, String keyName, List<String> models) {
         String fullUrl = baseUrl.endsWith("/") ? baseUrl + "v1/chat/completions" : baseUrl + "/v1/chat/completions";
         this.addProvider(provider, fullUrl, keyName, models);
+    }
+
+    /**
+     * Set a specific provider without removing others.
+     * 
+     * @param provider The name of the provider to set
+     * @param url      The API URL for the provider
+     * @param keyName  The environment variable name for the API key
+     * @param models   List of supported models
+     */
+    public void setProvider(String provider, String url, String keyName, List<String> models) {
+        // Remove existing provider if it exists
+        providers.removeIf(p -> p.getProvider().equals(provider));
+        // Add new provider
+        this.addProvider(provider, url, keyName, models);
+    }
+
+    /**
+     * Set a specific provider with v1 endpoint without removing others.
+     * 
+     * @param provider The name of the provider to set
+     * @param baseUrl  The base URL of the provider's API (without endpoint)
+     * @param keyName  The environment variable name for the API key
+     * @param models   List of supported models
+     */
+    public void setProviderWithV1(String provider, String baseUrl, String keyName, List<String> models) {
+        // Remove existing provider if it exists
+        providers.removeIf(p -> p.getProvider().equals(provider));
+        // Add new provider with v1 endpoint
+        this.addProviderWithV1(provider, baseUrl, keyName, models);
     }
 
     /**
