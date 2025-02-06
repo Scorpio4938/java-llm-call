@@ -25,11 +25,11 @@
   //   "${workspaceFolder}/src/main/java",
   //   "${workspaceFolder}/src/test/java"
   // ],
-  "java.test.config": [
-    {
-      "name": "CustomTestConfig",
-      "workingDirectory": "${workspaceFolder}"
-    }
-  ],
-  "java.test.defaultConfig": "CustomTestConfig"
+  // "java.test.config": [
+  //   {
+  //     "name": "CustomTestConfig",
+  //     "workingDirectory": "${workspaceFolder}"
+  //   }
+  // ],
+  // "java.test.defaultConfig": "CustomTestConfig"
 }

@@ -1,14 +1,13 @@
-{
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "Gradle Build",
-        "type": "shell",
-        "command": "gradle build",
-        "options": {
-          "cwd": "${workspaceFolder}"  // Ensure the working directory is the project root
-        }
-
-      }
-    ]
-  }
+// {
+//     "version": "2.0.0",
+//     "tasks": [
+//       {
+//         "label": "Gradle Build",
+//         "type": "shell",
+//         "command": "gradle build",
+//         "options": {
+//           "cwd": "${workspaceFolder}"  // Ensure the working directory is the project root
+//         }
+//       }
+//     ]
+//   }
