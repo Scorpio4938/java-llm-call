@@ -19,7 +19,7 @@ public class Providers {
         this.addProvider("DEEPSEEK", "https://api.deepseek.com", "DEEPSEEK_API_KEY", List.of("deepseek-chat", "deepseek-coder"));
         this.addProvider("MOONSHOT", "https://api.moonshot.cn/v1/chat/completions", "MOONSHOT_API_KEY", List.of("moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"));
         this.addProvider("OPENROUTER", "https://openrouter.ai/api/v1/chat/completions", "OPEN_ROUTER_API_KEY", List.of("google/gemini-exp-1206:free", "google/gemini-2.0-flash-exp:free", "meta-llama/llama-3.2-1b-instruct:free"));
-        this.addProvider("OLLAMA", "http://localhost:11434", null, List.of("deepseek-r1:1.5b","qwen2.5:0.5b","qwen2.5-coder:3b", "llama3.2:3b"));
+        this.addProvider("OLLAMA", "http://192.168.3.113:11434", null, List.of("deepseek-r1:1.5b","qwen2.5:0.5b","qwen2.5-coder:3b", "llama3.2:3b"));
     }
 
     /**

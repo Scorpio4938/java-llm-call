@@ -1,6 +1,5 @@
 package com.scorpio4938.LLMCall.api.llm;
 
-import com.scorpio4938.LLMCall.service.utils.debug.Debugger;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.AfterEach;
@@ -11,8 +10,13 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.time.Duration;
+import java.net.http.HttpClient;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test uses an embedded HTTP server to simulate the LLM API.
@@ -21,28 +25,28 @@ public class LLMApiClientTest {
 
     private HttpServer server;
     private int port;
+    private LLMApiClient client;
 
     @BeforeEach
     public void setUp() throws IOException {
-        // Create an HTTP server on a random available port.
+        // Start a simple HTTP server
         server = HttpServer.create(new InetSocketAddress(0), 0);
         port = server.getAddress().getPort();
-        // Create a context to handle POST requests at the root path
-        server.createContext("/", (HttpExchange exchange) -> {
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                // Define a fixed JSON response that the LLMResponse parser is expected to handle.
-                String response = "{\"choices\": [{\"message\": {\"content\": \"Hello, test!\"}}]}";
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, response.getBytes().length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
-            } else {
-                exchange.sendResponseHeaders(405, -1); // Method Not Allowed
+
+        // Setup a basic response handler
+        server.createContext("/", exchange -> {
+            String response = "{\"choices\": [{\"message\": {\"content\": \"Hello!\"}}]}";
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.getBytes().length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
             }
             exchange.close();
         });
         server.start();
+
+        // Create test client
+        client = new LLMApiClient(new TestProvider("http://localhost:" + port + "/"));
     }
 
     @AfterEach
@@ -50,76 +54,120 @@ public class LLMApiClientTest {
         server.stop(0);
     }
 
-    // Dummy Provider implementation for the test.
-    private static class DummyProvider extends Provider {
-        private final String url;
-
-        DummyProvider(String url) {
-            // Call the Provider constructor with required dummy values.
-            super("dummy-provider", url, "dummy-key", java.util.List.of("test-model"));
-            this.url = url;
+    // Simple test provider
+    private static class TestProvider extends Provider {
+        TestProvider(String url) {
+            super("test-provider", url, "test-key", java.util.List.of("test-model"));
         }
 
         @Override
         public String getModel(String model) {
-            // For testing, just return the given model.
             return model;
         }
-
-        @Override
-        public String getUrl() {
-            return url;
-        }
-
-        @Override
-        public String getKey() {
-            // Return a dummy key.
-            return "dummy-key";
-        }
     }
 
     @Test
-    public void testCallLLM() throws Exception {
-        // Create a provider targeting our local test HTTP server.
-        String serverUrl = "http://localhost:" + port + "/";
-        Provider dummyProvider = new DummyProvider(serverUrl);
-
-        // Create an instance of LLMApiClient with a test maxTokens value.
-        LLMApiClient client = new LLMApiClient(dummyProvider, 50);
-
-        // Create a dummy data map. The keys/values here will be sorted in the request.
-        Map<String, String> data = Map.of(
-                "role", "system",
-                "content", "Test content"
-        );
-
-        // Call the LLM client which sends the HTTP request and parse the JSON response.
+    public void testBasicCall() throws Exception {
+        Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.callLLM("test-model", data);
-
-        // Verify that the first message's content is as expected.
-        assertEquals("Hello, test!", result);
-        // Debugger.log("Call LLM Test Response: " + result);
+        assertEquals("Hello!", result);
     }
 
     @Test
-    public void testCallLLM_Ollama() throws Exception {
-        // Create a provider targeting our local test HTTP server.
+    public void testCallWithParameters() throws Exception {
+        Map<String, String> data = Map.of("role", "user", "content", "Hi");
+        Map<String, Object> params = Map.of("max_tokens", 50, "temperature", 0.7);
+
+        String result = client.callLLM("test-model", data, params);
+        assertEquals("Hello!", result);
+    }
+
+    @Test
+    public void testInvalidInput() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            client.callLLM("", Map.of("role", "user"));
+        });
+    }
+
+    @Test
+    public void testRealOllamaCall() throws Exception {
+        // Verify Ollama is running
+        try {
+            HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:11434"))
+                    .GET()
+                    .build(),
+                HttpResponse.BodyHandlers.ofString()
+            );
+        } catch (Exception e) {
+            System.err.println("Ollama is not running. Please start it with 'ollama serve'");
+            return; // Skip test if Ollama isn't running
+        }
+
+        // Create the Ollama provider
         Providers providers = new Providers();
         Provider ollamaProvider = providers.getProvider("OLLAMA");
+        
+        // Create client with default timeout
+        LLMApiClient client = new LLMApiClient(ollamaProvider, HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .build());
 
-        // Create an instance of LLMApiClient with a test maxTokens value.
-        LLMApiClient client = new LLMApiClient(ollamaProvider, 50);
-
-        // Create a dummy data map. The keys/values here will be sorted in the request.
-        Map<String, String> data = Map.of(
-                "role", "user",
-                "content", "hello"
+        // Create a simple message
+        Map<String, String> messages = Map.of(
+            "role", "user",
+            "content", "Hello, how are you?"
         );
 
-        // Call the LLM client which sends the HTTP request and parse the JSON response.
-        String result = client.callLLM("deepseek-r1:1.5b", data);
-
-        // Log the result using the Debugger class.
-        Debugger.log("OLLAMA Response: " + result);
+        try {
+            // Call the LLM with default parameters
+            String response = client.callLLM("deepseek-r1:1.5b", messages);
+            
+            // Basic validation of the response
+            assertNotNull(response);
+            assertFalse(response.isEmpty());
+            System.out.println("Ollama response: " + response);
+        } catch (Exception e) {
+            System.err.println("Ollama API call failed. Make sure:");
+            System.err.println("1. Ollama is running locally ('ollama serve')");
+            System.err.println("2. The model 'deepseek-r1:1.5b' is available ('ollama list')");
+            System.err.println("3. The Ollama API is accessible at " + ollamaProvider.getUrl());
+            System.err.println("If the model isn't available, run: ollama pull deepseek-r1:1.5b");
+            throw e;
+        }
     }
-} 
+
+    @Test
+    public void testRealOpenRouterCall() throws Exception {
+        // Create the OpenRouter provider
+        Providers providers = new Providers();
+        Provider openRouterProvider = providers.getProvider("OPENROUTER");
+
+        // Create client with default timeout
+        LLMApiClient client = new LLMApiClient(openRouterProvider, HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .build());
+
+        // Create a simple message
+        Map<String, String> messages = Map.of(
+                "role", "user",
+                "content", "Hello, how are you?");
+
+        try {
+            // Call the LLM with default parameters
+            String response = client.callLLM("meta-llama/llama-3.2-1b-instruct:free", messages);
+
+            // Basic validation of the response
+            assertNotNull(response);
+            assertFalse(response.isEmpty());
+            System.out.println("OpenRouter response: " + response);
+        } catch (Exception e) {
+            System.err.println("OpenRouter API call failed. Make sure:");
+            System.err.println("1. You have a valid OPENROUTER_API_KEY in your environment");
+            System.err.println("2. The model 'openai/gpt-3.5-turbo' is available");
+            System.err.println("3. The OpenRouter API is accessible at " + openRouterProvider.getUrl());
+            throw e;
+        }
+    }
+}
