@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -122,7 +123,7 @@ public class LLMApiClient {
      *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
      */
-    public String callLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
+    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
         String requestBody = buildRequestBody(model, data, params);
         String responseBody = sendRequest(requestBody);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
@@ -130,7 +131,8 @@ public class LLMApiClient {
     }
 
     /**
-     * Calls the LLM with the given model and message map using default parameters.
+     * Calls the LLM with the given model and message map using default
+     * parameters.
      *
      * @param model The model to use
      * @param data  The message data
@@ -139,7 +141,50 @@ public class LLMApiClient {
      *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
      */
-    public String callLLM(String model, Map<String, String> data) throws Exception {
-        return callLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
+    public String directCallLLM(String model, Map<String, String> data) throws Exception {
+        return directCallLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
+    }
+
+    public ModelChain callLLM(String model, Map<String, String> data) {
+        return new ModelChain(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
+    }
+
+    public ModelChain callLLM(String model, Map<String, String> data, Map<String, Object> params) {
+        return new ModelChain(model, data, params);
+    }
+
+    public class ModelChain {
+        private final String primaryModel;
+        private final Map<String, String> data;
+        private final Map<String, Object> params;
+        private final List<String> fallbackModels = new ArrayList<>();
+
+        public ModelChain(String model, Map<String, String> data, Map<String, Object> params) {
+            this.primaryModel = model;
+            this.data = data;
+            this.params = params;
+        }
+
+        public ModelChain withFallback(String... models) {
+            fallbackModels.addAll(Arrays.asList(models));
+            return this;
+        }
+
+        public String execute() throws Exception {
+            List<String> allModels = new ArrayList<>();
+            allModels.add(primaryModel);
+            allModels.addAll(fallbackModels);
+
+            Exception lastError = null;
+            for (String model : allModels) {
+                try {
+                    return LLMApiClient.this.directCallLLM(model, data, params);
+                } catch (Exception e) {
+                    lastError = e;
+                    Debugger.log("Model " + model + " failed: " + e.getMessage());
+                }
+            }
+            throw new Exception("All models failed", lastError);
+        }
     }
 }

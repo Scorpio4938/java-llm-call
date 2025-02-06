@@ -31,9 +31,19 @@ public class LLMApiClientTest {
 
         // Setup a basic response handler
         server.createContext("/", exchange -> {
-            String response = "{\"choices\": [{\"message\": {\"content\": \"Hello!\"}}]}";
+            String requestBody = new String(exchange.getRequestBody().readAllBytes());
+            String response;
+            int statusCode = 200;
+
+            if (requestBody.contains("\"model\":\"bad-model\"")) {
+                statusCode = 500;
+                response = "{\"error\": \"Internal server error\"}";
+            } else {
+                response = "{\"choices\": [{\"message\": {\"content\": \"Hello!\"}}]}";
+            }
+
             exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.getBytes().length);
+            exchange.sendResponseHeaders(statusCode, response.getBytes().length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
             }
@@ -42,7 +52,12 @@ public class LLMApiClientTest {
         server.start();
 
         // Create test client
-        client = new LLMApiClient(new TestProvider("http://localhost:" + port + "/"));
+        client = new LLMApiClient(new TestProvider("http://localhost:" + port + "/") {
+            @Override
+            public String getModel(String model) {
+                return "/" + model; // Models map to different endpoints
+            }
+        });
     }
 
     @AfterEach
@@ -65,7 +80,7 @@ public class LLMApiClientTest {
     @Test
     public void testBasicCall() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.callLLM("test-model", data);
+        String result = client.directCallLLM("test-model", data);
         assertEquals("Hello!", result);
     }
 
@@ -74,34 +89,19 @@ public class LLMApiClientTest {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         Map<String, Object> params = Map.of("max_tokens", 50, "temperature", 0.7);
 
-        String result = client.callLLM("test-model", data, params);
+        String result = client.directCallLLM("test-model", data, params);
         assertEquals("Hello!", result);
     }
 
     @Test
     public void testInvalidInput() {
         assertThrows(IllegalArgumentException.class, () -> {
-            client.callLLM("", Map.of("role", "user"));
+            client.directCallLLM("", Map.of("role", "user"));
         });
     }
 
     @Test
     public void testRealOllamaCall() throws Exception {
-        // Verify Ollama is running
-        // try {
-        // HttpClient.newHttpClient().send(
-        // HttpRequest.newBuilder()
-        // .uri(URI.create("http://localhost:11434"))
-        // .GET()
-        // .build(),
-        // HttpResponse.BodyHandlers.ofString()
-        // );
-        // } catch (Exception e) {
-        // System.err.println("Ollama is not running. Please start it with 'ollama
-        // serve'");
-        // return; // Skip test if Ollama isn't running
-        // }
-
         // Create the Ollama provider
         Providers providers = new Providers();
         Provider ollamaProvider = providers.getProvider("OLLAMA");
@@ -118,7 +118,7 @@ public class LLMApiClientTest {
 
         try {
             // Call the LLM with default parameters
-            String response = client.callLLM("deepseek-r1:1.5b", messages);
+            String response = client.directCallLLM("deepseek-r1:1.5b", messages);
 
             // Basic validation of the response
             assertNotNull(response);
@@ -127,6 +127,16 @@ public class LLMApiClientTest {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    @Test
+    public void testModelChainFallback() throws Exception {
+        Map<String, String> data = Map.of("role", "user", "content", "Hi");
+        String result = client.callLLM("bad-model", data)
+                .withFallback("good-model")
+                .execute();
+
+        assertEquals("Hello!", result);
     }
 
     // @Test
