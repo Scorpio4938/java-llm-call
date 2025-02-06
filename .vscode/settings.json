@@ -1,0 +1,35 @@
+{
+  // "java.home": "/path/to/java",
+  // "java.configuration.runtimes": [
+  //   {
+  //     "name": "JavaSE-17",
+  //     "path": "C:\\Program Files\\Java\\jdk-17",
+  //     "default": true
+  //   }
+  // ],
+  // "java.configuration.updateBuildConfiguration": "interactive",
+  // "java.import.gradle.enabled": true,
+  // "java.import.maven.enabled": true,
+  // "java.import.project": true,
+  // "java.import.settings": true,
+  // "java.import.synchronize": true,
+  // "java.import.synchronizeAutomatically": true,
+  // "java.import.synchronizeAutomaticallyDelay": 300,
+  // "java.import.synchronizeAutomaticallyOnStartup": true,
+  // "java.import.synchronizeAutomaticallyOnWorkspaceChange": true,
+  // "java.import.synchronizeAutomaticallyOnWorkspaceChangeDelay": 300,
+  "java.compile.nullAnalysis.mode": "automatic",
+  // "terminal.integrated.cwd": "${workspaceFolder}",
+  // "java.rootPath": "${workspaceFolder}",
+  // "java.project.sourcePaths": [
+  //   "${workspaceFolder}/src/main/java",
+  //   "${workspaceFolder}/src/test/java"
+  // ],
+  "java.test.config": [
+    {
+      "name": "CustomTestConfig",
+      "workingDirectory": "${workspaceFolder}"
+    }
+  ],
+  "java.test.defaultConfig": "CustomTestConfig"
+}

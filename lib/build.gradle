@@ -43,7 +43,16 @@ java {
     }
 }
 
+// sourceSets.main.resources {
+//     srcDirs = ["src/main/resources", "../"] // Include root directory
+//     includes = ["**/*.env"] // Only include .env files from root
+// }
+
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+tasks.withType(Jar) {   
+    exclude('.env')
 }

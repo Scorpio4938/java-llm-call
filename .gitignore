@@ -9,7 +9,9 @@ build
 
 #IDE
 .idea
-.vscode
+# .vscode
 
 #ENV
 .env
+.env.template
+.env.temp
