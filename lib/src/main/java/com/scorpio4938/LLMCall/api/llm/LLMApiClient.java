@@ -23,7 +23,7 @@ public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
     private static final int DEFAULT_MAX_TOKENS = 100;
-    
+
     private final Provider provider;
     private final HttpClient httpClient;
 
@@ -54,31 +54,32 @@ public class LLMApiClient {
     /**
      * Builds the JSON request body from the model, message map, and parameters.
      *
-     * @param model The model to use
-     * @param data  The message data
-     * @param params Additional parameters for the LLM call (e.g., max_tokens, temperature)
+     * @param model  The model to use
+     * @param data   The message data
+     * @param params Additional parameters for the LLM call (e.g., max_tokens,
+     *               temperature)
      * @return JSON string representing the request body
      * @throws IllegalArgumentException if model is null or empty, or data is null
      */
-    private String buildRequestBody(String model, Map<String, String> data, Map<String, Object> params) {
-        Objects.requireNonNull(model, "Model must not be null");
-        Objects.requireNonNull(data, "Data must not be null");
-        Objects.requireNonNull(params, "Params must not be null");
-        
+    private String buildRequestBody(String model, Map<String, String> messages, Map<String, Object> params) {
+        // Objects.requireNonNull(model, "Model must not be null");
+        // Objects.requireNonNull(messages, "Messages must not be null");
+        // Objects.requireNonNull(params, "Params must not be null");
+
         if (model.trim().isEmpty()) {
             throw new IllegalArgumentException("Model must not be empty");
         }
 
-        Map<String, String> sortedData = MapSorter.sortByKeys(data);
-        List<LLMRequest.Message> messages = new ArrayList<>();
-        for (Map.Entry<String, String> entry : sortedData.entrySet()) {
-            messages.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
+        Map<String, String> sortedMessages = MapSorter.sortByKeys(messages);
+        List<LLMRequest.Message> messagesList = new ArrayList<>();
+        for (Map.Entry<String, String> entry : sortedMessages.entrySet()) {
+            messagesList.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
         }
-        
+
         // Create request with dynamic parameters
-        LLMRequest request = new LLMRequest(provider.getModel(model), messages);
+        LLMRequest request = new LLMRequest(provider.getModel(model), messagesList);
         request.addParameters(params);
-        
+
         return GSON.toJson(request);
     }
 
@@ -113,11 +114,12 @@ public class LLMApiClient {
     /**
      * Calls the LLM with the given model, message map, and parameters.
      *
-     * @param model The model to use
-     * @param data  The message data
+     * @param model  The model to use
+     * @param data   The message data
      * @param params Additional parameters for the LLM call
      * @return The content of the first message in the response
-     * @throws Exception if there is an error while processing the request
+     * @throws Exception                if there is an error while processing the
+     *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
      */
     public String callLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
@@ -133,7 +135,8 @@ public class LLMApiClient {
      * @param model The model to use
      * @param data  The message data
      * @return The content of the first message in the response
-     * @throws Exception if there is an error while processing the request
+     * @throws Exception                if there is an error while processing the
+     *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
      */
     public String callLLM(String model, Map<String, String> data) throws Exception {

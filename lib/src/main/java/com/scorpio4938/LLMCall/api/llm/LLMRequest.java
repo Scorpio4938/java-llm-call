@@ -18,7 +18,9 @@ public class LLMRequest {
     }
 
     public void addParameters(Map<String, Object> params) {
-        parameters.putAll(params);
+        if (params != null) {
+            parameters.putAll(params);
+        }
     }
 
     public static Message createMessage(String role, String content) {
