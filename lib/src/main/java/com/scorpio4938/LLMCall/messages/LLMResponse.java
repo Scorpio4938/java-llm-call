@@ -1,4 +1,4 @@
-package com.scorpio4938.LLMCall.api.llm;
+package com.scorpio4938.LLMCall.messages;
 
 import com.google.gson.annotations.SerializedName;
 

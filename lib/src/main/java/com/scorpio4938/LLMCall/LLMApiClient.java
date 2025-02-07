@@ -1,7 +1,10 @@
-package com.scorpio4938.LLMCall.api.llm;
+package com.scorpio4938.LLMCall;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.scorpio4938.LLMCall.messages.LLMRequest;
+import com.scorpio4938.LLMCall.messages.LLMResponse;
+import com.scorpio4938.LLMCall.providers.Provider;
 import com.scorpio4938.LLMCall.service.utils.MapSorter;
 import com.scorpio4938.LLMCall.service.utils.debug.Debugger;
 

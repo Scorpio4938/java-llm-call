@@ -1,5 +1,8 @@
-package com.scorpio4938.LLMCall.api.llm;
+package com.scorpio4938.LLMCall;
 
+import com.scorpio4938.LLMCall.LLMApiClient;
+import com.scorpio4938.LLMCall.providers.Provider;
+import com.scorpio4938.LLMCall.providers.Providers;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
