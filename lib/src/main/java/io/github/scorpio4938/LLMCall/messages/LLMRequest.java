@@ -1,4 +1,4 @@
-package com.scorpio4938.LLMCall.messages;
+package io.github.scorpio4938.LLMCall.messages;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

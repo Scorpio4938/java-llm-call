@@ -1,4 +1,4 @@
-package com.scorpio4938.LLMCall.service.utils;
+package io.github.scorpio4938.LLMCall.service.utils;
 
 import java.util.Map;
 

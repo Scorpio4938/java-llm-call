@@ -1,4 +1,4 @@
-package com.scorpio4938.LLMCall.providers;
+package io.github.scorpio4938.LLMCall.providers;
 
 import io.github.cdimascio.dotenv.Dotenv;
 

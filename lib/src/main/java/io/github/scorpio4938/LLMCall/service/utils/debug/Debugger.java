@@ -1,4 +1,4 @@
-package com.scorpio4938.LLMCall.service.utils.debug;
+package io.github.scorpio4938.LLMCall.service.utils.debug;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

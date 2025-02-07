@@ -1,9 +1,9 @@
-package com.scorpio4938.LLMCall.providers;
+package io.github.scorpio4938.LLMCall.providers;
 
 import org.junit.jupiter.api.Test;
 
-import com.scorpio4938.LLMCall.providers.Provider;
-import com.scorpio4938.LLMCall.providers.Providers;
+import io.github.scorpio4938.LLMCall.providers.Provider;
+import io.github.scorpio4938.LLMCall.providers.Providers;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,6 +1,9 @@
-package com.scorpio4938.LLMCall.service.utils;
+package io.github.scorpio4938.LLMCall.service.utils;
 
 import org.junit.jupiter.api.Test;
+
+import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
+
 import java.util.HashMap;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
