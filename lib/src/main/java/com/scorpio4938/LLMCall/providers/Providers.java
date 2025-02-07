@@ -38,6 +38,8 @@ public class Providers {
      * @param keyName  The name of the environment variable that contains the API
      *                 key.
      * @param models   The list
+     * 
+     * @since 1.0.0
      */
     public void addProvider(String provider, String url, String keyName, List<String> models) {
         // System.out.println("Working directory: " + System.getProperty("user.dir"));
@@ -53,6 +55,8 @@ public class Providers {
      * @param keyName  The name of the environment variable that contains the API
      *                 key.
      * @param models   The list of supported models.
+     * 
+     * @since 1.0.0
      */
     public void addProviderWithV1(String provider, String baseUrl, String keyName, List<String> models) {
         String fullUrl = baseUrl.endsWith("/") ? baseUrl + "v1/chat/completions" : baseUrl + "/v1/chat/completions";
@@ -66,6 +70,8 @@ public class Providers {
      * @param url      The API URL for the provider
      * @param keyName  The environment variable name for the API key
      * @param models   List of supported models
+     * 
+     * @since 1.0.0
      */
     public void setProvider(String provider, String url, String keyName, List<String> models) {
         // Remove existing provider if it exists
@@ -81,6 +87,8 @@ public class Providers {
      * @param baseUrl  The base URL of the provider's API (without endpoint)
      * @param keyName  The environment variable name for the API key
      * @param models   List of supported models
+     * 
+     * @since 1.0.0
      */
     public void setProviderWithV1(String provider, String baseUrl, String keyName, List<String> models) {
         // Remove existing provider if it exists
@@ -95,6 +103,8 @@ public class Providers {
      * @param provider The name of the provider.
      * @return The provider object.
      * @throws IllegalArgumentException If the provider is not supported.
+     * 
+     * @since 1.0.0
      */
     public Provider getProvider(String provider) {
         for (Provider provider1 : providers) {
@@ -109,8 +119,11 @@ public class Providers {
      * Get all available providers.
      *
      * @return A list of all available providers.
+     * 
+     * @since 1.0.0
      */
     public List<Provider> getProviders() {
         return this.providers;
     }
+
 }

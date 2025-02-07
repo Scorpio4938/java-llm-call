@@ -2,9 +2,15 @@ package com.scorpio4938.LLMCall.service.utils;
 
 import java.util.Map;
 
+/**
+ * Utility class for validating input parameters.
+ * 
+ * @since 1.0.0
+ */
 public class Validation {
 
     /**
+     * 
      * Validates that the given object is not null.
      *
      * @param obj        The object to validate.

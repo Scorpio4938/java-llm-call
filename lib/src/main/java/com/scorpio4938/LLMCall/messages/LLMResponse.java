@@ -28,6 +28,13 @@ public class LLMResponse {
         }
     }
 
+    /**
+     * Gets the content of the first message in the response.
+     *
+     * @return The content of the first message in the response
+     * 
+     * @since 1.0.0
+     */
     public String getFirstMessageContent() {
         return choices != null && choices.length > 0 && choices[0].getMessage() != null
                 ? choices[0].getMessage().getContent()

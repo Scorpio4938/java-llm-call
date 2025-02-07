@@ -5,6 +5,11 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Utility class for debugging messages.
+ * 
+ * @since 1.0.0
+ */
 public class Debugger {
     private static final boolean ENABLED = true; // Set to false to disable debugging logs
 

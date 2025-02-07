@@ -17,12 +17,27 @@ public class LLMRequest {
         this.parameters = new HashMap<>();
     }
 
+    /**
+     * Adds parameters to the request.
+     *
+     * @param params The parameters to add
+     * 
+     * @since 1.0.0
+     */
     public void addParameters(Map<String, Object> params) {
         if (params != null) {
             parameters.putAll(params);
         }
     }
 
+    /**
+     * Creates a new message.
+     *
+     * @param role    The role of the message
+     * @param content The content of the message
+     * 
+     * @since 1.0.0
+     */
     public static Message createMessage(String role, String content) {
         return new Message(role, content);
     }

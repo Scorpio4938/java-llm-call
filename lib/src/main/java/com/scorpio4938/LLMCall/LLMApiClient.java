@@ -22,6 +22,8 @@ import java.util.Objects;
 
 /**
  * Simplified LLM API Client for making requests to language models.
+ * 
+ * @since 1.0.0
  */
 public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
@@ -36,6 +38,8 @@ public class LLMApiClient {
      *
      * @param provider The LLM provider to use (must not be null)
      * @throws IllegalArgumentException if provider is null
+     * 
+     * @since 1.0.0
      */
     public LLMApiClient(Provider provider) {
         this(provider, HttpClient.newBuilder()
@@ -64,24 +68,26 @@ public class LLMApiClient {
      *               temperature)
      * @return JSON string representing the request body
      * @throws IllegalArgumentException if model is null or empty, or data is null
+     * 
+     * @since 1.0.0
      */
-    private String buildRequestBody(String model, Map<String, String> messages, Map<String, Object> params) {
+    private String buildRequestBody(String model, Map<String, String> data, Map<String, Object> params) {
         // Objects.requireNonNull(model, "Model must not be null");
-        // Objects.requireNonNull(messages, "Messages must not be null");
+        // Objects.requireNonNull(data, "Data must not be null");
         // Objects.requireNonNull(params, "Params must not be null");
 
         if (model.trim().isEmpty()) {
             throw new IllegalArgumentException("Model must not be empty");
         }
 
-        Map<String, String> sortedMessages = MapSorter.sortByKeys(messages);
-        List<LLMRequest.Message> messagesList = new ArrayList<>();
-        for (Map.Entry<String, String> entry : sortedMessages.entrySet()) {
-            messagesList.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
+        Map<String, String> sortedData = MapSorter.sortByKeys(data);
+        List<LLMRequest.Message> dataList = new ArrayList<>();
+        for (Map.Entry<String, String> entry : sortedData.entrySet()) {
+            dataList.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
         }
 
         // Create request with dynamic parameters
-        LLMRequest request = new LLMRequest(provider.getModel(model), messagesList);
+        LLMRequest request = new LLMRequest(provider.getModel(model), dataList);
         request.addParameters(params);
 
         return GSON.toJson(request);
@@ -93,6 +99,8 @@ public class LLMApiClient {
      * @param requestBody The request body to send
      * @return The response body
      * @throws Exception if there is an error while sending the request
+     * 
+     * @since 1.0.0
      */
     private String sendRequest(String requestBody) throws Exception {
         String apiUrl = provider.getUrl();
@@ -125,6 +133,8 @@ public class LLMApiClient {
      * @throws Exception                if there is an error while processing the
      *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
+     * 
+     * @since 1.0.0
      */
     public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
         String requestBody = buildRequestBody(model, data, params);
@@ -143,18 +153,38 @@ public class LLMApiClient {
      * @throws Exception                if there is an error while processing the
      *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
+     * 
+     * @since 1.0.0
      */
     public String directCallLLM(String model, Map<String, String> data) throws Exception {
         return directCallLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
     }
 
+    /**
+     * Calls the LLM with the given model and message map using default
+     * parameters.
+     *
+     * @param model The model to use
+     * @param data  The message data
+     * @return The content of the first message in the response
+     * 
+     * @since 1.0.0
+     */
     public ModelChain callLLM(String model, Map<String, String> data) {
         return new ModelChain(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
     }
 
-    public ModelChain callLLM(String model, Map<String, String> data, Map<String, Object> params) {
-        return new ModelChain(model, data, params);
-    }
+    /**
+     * Calls the LLM with the given model and message map using the specified
+     * parameters.
+     *
+     * @param model  The model to use
+     * @param data   The message data
+     * @param params Additional parameters for the LLM call
+     * @return The content of the first message in the response
+     * 
+     * @since 1.0.0
+     */
 
     public class ModelChain {
         private final String primaryModel;
@@ -168,11 +198,27 @@ public class LLMApiClient {
             this.params = params;
         }
 
+        /**
+         * Adds fallback models to the chain.
+         *
+         * @param models The models to add
+         * @return The updated ModelChain
+         * 
+         * @since 1.0.0
+         */
         public ModelChain withFallback(String... models) {
             fallbackModels.addAll(Arrays.asList(models));
             return this;
         }
 
+        /**
+         * Executes the model chain.
+         *
+         * @return The content of the first message in the response
+         * @throws Exception if all models fail
+         * 
+         * @since 1.0.0
+         */
         public String execute() throws Exception {
             List<String> allModels = new ArrayList<>();
             allModels.add(primaryModel);
@@ -186,6 +232,7 @@ public class LLMApiClient {
                     lastError = e;
                     Debugger.log("Model " + model + " failed: " + e.getMessage());
                 }
+
             }
             throw new Exception("All models failed", lastError);
         }
