@@ -15,3 +15,14 @@ build
 .env
 .env.template
 .env.temp
+
+#SECRET
+secret
+secret.*
+*.secret
+*.secret.*
+secrets
+secrets.*
+*.secrets
+*.secrets.*
+*.secret.asc
