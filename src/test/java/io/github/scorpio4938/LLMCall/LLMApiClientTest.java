@@ -105,34 +105,34 @@ public class LLMApiClientTest {
         });
     }
 
-    @Test
-    public void testRealOllamaCall() throws Exception {
-        // Create the Ollama provider
-        Providers providers = new Providers();
-        Provider ollamaProvider = providers.getProvider("OLLAMA");
+    // @Test
+    // public void testRealOllamaCall() throws Exception {
+    //     // Create the Ollama provider
+    //     Providers providers = new Providers();
+    //     Provider ollamaProvider = providers.getProvider("OLLAMA");
 
-        // Create client with default timeout
-        LLMApiClient client = new LLMApiClient(ollamaProvider, HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
-                .build());
+    //     // Create client with default timeout
+    //     LLMApiClient client = new LLMApiClient(ollamaProvider, HttpClient.newBuilder()
+    //             .connectTimeout(Duration.ofSeconds(30))
+    //             .build());
 
-        // Create a simple message
-        Map<String, String> messages = Map.of(
-                "role", "user",
-                "content", "Hello, how are you?");
+    //     // Create a simple message
+    //     Map<String, String> messages = Map.of(
+    //             "role", "user",
+    //             "content", "Hello, how are you?");
 
-        try {
-            // Call the LLM with default parameters
-            String response = client.directCallLLM("deepseek-r1:1.5b", messages);
+    //     try {
+    //         // Call the LLM with default parameters
+    //         String response = client.directCallLLM("deepseek-r1:1.5b", messages);
 
-            // Basic validation of the response
-            assertNotNull(response);
-            assertFalse(response.isEmpty());
-            System.out.println("Ollama response: " + response);
-        } catch (Exception e) {
-            throw e;
-        }
-    }
+    //         // Basic validation of the response
+    //         assertNotNull(response);
+    //         assertFalse(response.isEmpty());
+    //         System.out.println("Ollama response: " + response);
+    //     } catch (Exception e) {
+    //         throw e;
+    //     }
+    // }
 
     @Test
     public void testModelChainFallback() throws Exception {
