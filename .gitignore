@@ -26,3 +26,7 @@ secrets.*
 *.secrets
 *.secrets.*
 *.secret.asc
+
+### Maven template
+target/
+bin/
