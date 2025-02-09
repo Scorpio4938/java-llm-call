@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * Simplified LLM API Client for making requests to language models.
@@ -238,5 +240,15 @@ public class LLMApiClient {
             }
             throw new Exception("All models failed", lastError);
         }
+    }
+
+    public CompletableFuture<String> asyncCallLLM(String model, Map<String, String> data) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return directCallLLM(model, data);
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 }

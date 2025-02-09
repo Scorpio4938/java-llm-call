@@ -16,6 +16,8 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.time.Duration;
 import java.net.http.HttpClient;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -174,4 +176,13 @@ public class LLMApiClientTest {
     // throw e;
     // }
     // }
+
+    @Test
+    public void testAsyncCall() throws Exception {
+        Map<String, String> data = Map.of("role", "user", "content", "Hi");
+        CompletableFuture<String> future = client.asyncCallLLM("test-model", data);
+        
+        String result = future.get(5, TimeUnit.SECONDS);
+        assertEquals("Hello!", result);
+    }
 }
