@@ -42,6 +42,18 @@ public class LLMRequest {
         return new Message(role, content);
     }
 
+    public String getModel() {
+        return model;
+    }
+
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public Map<String, Object> getParameters() {
+        return parameters;
+    }
+
     public static class Message {
         private final String role;
         private final String content;
@@ -49,6 +61,14 @@ public class LLMRequest {
         public Message(String role, String content) {
             this.role = role;
             this.content = content;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public String getContent() {
+            return content;
         }
 
         // Getters and setters if needed

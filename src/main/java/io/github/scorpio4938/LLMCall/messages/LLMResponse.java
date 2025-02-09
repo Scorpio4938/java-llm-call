@@ -2,15 +2,32 @@ package io.github.scorpio4938.LLMCall.messages;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Represents a response from an LLM.
+ * 
+ * @since 1.0.0
+ */
 public class LLMResponse {
     @SerializedName("id")
     private String id;
+
     @SerializedName("choices")
     private Choice[] choices;
 
+    /**
+     * Represents a choice from an LLM.
+     * 
+     * @since 1.0.0
+     */
     public static class Choice {
         @SerializedName("message")
         private Message message;
+
+        /**
+         * Represents a message from an LLM.
+         * 
+         * @since 1.0.0
+         */
 
         public static class Message {
             @SerializedName("role")
@@ -26,6 +43,7 @@ public class LLMResponse {
         public Message getMessage() {
             return message;
         }
+
     }
 
     /**

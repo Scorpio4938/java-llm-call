@@ -242,6 +242,15 @@ public class LLMApiClient {
         }
     }
 
+    /**
+     * Calls the LLM asynchronously.
+     *
+     * @param model The model to use
+     * @param data  The message data
+     * @return The content of the first message in the response
+     * 
+     * @since 1.0.1
+     */
     public CompletableFuture<String> asyncCallLLM(String model, Map<String, String> data) {
         return CompletableFuture.supplyAsync(() -> {
             try {
