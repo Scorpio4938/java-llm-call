@@ -4,11 +4,11 @@
 
   <name>java-llm-call</name>
   <description>A very basic and brief lib for calling llms in java.</description>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/scorpio4938/java-llm-call</url>
 
   <groupId>io.github.scorpio4938</groupId>
   <artifactId>java-llm-call</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 
   <packaging>jar</packaging>
 

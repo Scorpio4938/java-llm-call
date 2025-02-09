@@ -42,6 +42,6 @@ public class Provider {
                 return model;
             }
         }
-        throw new IllegalArgumentException("Unsupported model: " + modelName);
+        throw new ModelNotSupportedException(modelName);
     }
 }

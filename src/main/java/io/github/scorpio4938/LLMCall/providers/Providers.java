@@ -112,7 +112,7 @@ public class Providers {
                 return provider1;
             }
         }
-        throw new IllegalArgumentException("Unsupported provider: " + provider);
+        throw new ProviderNotSupportedException(provider);
     }
 
     /**

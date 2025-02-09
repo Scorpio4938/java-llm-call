@@ -37,11 +37,11 @@ class ProvidersTest {
     void shouldThrowForInvalidProvider() {
         Providers providers = new Providers();
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(ProviderNotSupportedException.class, () -> {
             providers.getProvider("INVALID_PROVIDER");
         });
 
-        assertEquals("Unsupported provider: INVALID_PROVIDER", exception.getMessage());
+        assertEquals("Provider not supported: INVALID_PROVIDER", exception.getMessage());
     }
 
     @Test

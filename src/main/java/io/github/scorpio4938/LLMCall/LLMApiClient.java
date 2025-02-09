@@ -5,9 +5,10 @@ import com.google.gson.GsonBuilder;
 
 import io.github.scorpio4938.LLMCall.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.messages.LLMResponse;
+import io.github.scorpio4938.LLMCall.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.providers.Provider;
+import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
-import io.github.scorpio4938.LLMCall.service.utils.debug.Debugger;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
@@ -117,7 +118,7 @@ public class LLMApiClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() >= 400) {
-            throw new Exception("API request failed with status code: " + response.statusCode());
+            throw new LLMResponseException(response);
         }
 
         Debugger.log("Response received: " + response.body());
