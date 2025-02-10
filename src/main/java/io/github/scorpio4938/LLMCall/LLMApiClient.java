@@ -37,6 +37,9 @@ public class LLMApiClient {
     private final Provider provider;
     private final HttpClient httpClient;
 
+    private int maxRetries = 3;
+    private long retryDelayMillis = 1000;
+
     /**
      * Constructs a new LLMApiClient with the specified provider.
      *
@@ -106,6 +109,7 @@ public class LLMApiClient {
      * 
      * @since 1.0.0
      */
+    @SuppressWarnings("unused")
     private String sendRequest(String requestBody) throws Exception {
         String apiUrl = provider.getUrl();
         HttpRequest request = HttpRequest.newBuilder()
@@ -128,6 +132,51 @@ public class LLMApiClient {
     }
 
     /**
+     * Sends HTTP request to the provider's API with retry logic.
+     *
+     * @param requestBody The request body to send
+     * @return The response body
+     * @throws Exception if there is an error while sending the request
+     * 
+     * @since 1.0.1
+     */
+    private String sendRequestWithRetry(String requestBody) throws Exception {
+        String apiUrl = provider.getUrl();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + provider.getKey())
+                .timeout(DEFAULT_TIMEOUT)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        int totalAttempts = maxRetries + 1;
+        Exception lastError = null;
+
+        for (int attempt = 1; attempt <= totalAttempts; attempt++) {
+            try {
+                Debugger.log("Attempt %d/%d to: %s".formatted(attempt, totalAttempts, apiUrl));
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() >= 400) {
+                    throw new LLMResponseException(response);
+                }
+
+                Debugger.log("Response received: " + response.body());
+                return response.body();
+            } catch (Exception e) {
+                lastError = e;
+                if (attempt < totalAttempts && shouldRetry(e)) {
+                    Debugger.log("Retrying in %dms...".formatted(retryDelayMillis));
+                    Thread.sleep(retryDelayMillis);
+                }
+            }
+        }
+
+        throw lastError;
+    }
+
+    /**
      * Calls the LLM with the given model, message map, and parameters.
      *
      * @param model  The model to use
@@ -142,7 +191,7 @@ public class LLMApiClient {
      */
     public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
         String requestBody = buildRequestBody(model, data, params);
-        String responseBody = sendRequest(requestBody);
+        String responseBody = sendRequestWithRetry(requestBody);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
     }
@@ -260,5 +309,21 @@ public class LLMApiClient {
                 throw new CompletionException(e);
             }
         });
+    }
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    public void setRetryDelay(long delay, java.util.concurrent.TimeUnit unit) {
+        this.retryDelayMillis = unit.toMillis(delay);
+    }
+
+    private boolean shouldRetry(Exception e) {
+        if (e instanceof LLMResponseException) {
+            int statusCode = ((LLMResponseException) e).getStatusCode();
+            return statusCode == 429 || (statusCode >= 500 && statusCode < 600);
+        }
+        return e instanceof java.io.IOException; // Retry on network errors
     }
 }
