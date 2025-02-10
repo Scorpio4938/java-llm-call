@@ -23,7 +23,6 @@ public class Providers {
 
         this.addProviderWithV1("OPENROUTER", "https://openrouter.ai", "OPEN_ROUTER_API_KEY",
                 List.of("google/gemini-exp-1206:free", "google/gemini-2.0-flash-exp:free",
-
                         "meta-llama/llama-3.2-1b-instruct:free"));
         this.addProviderWithV1("OLLAMA", "http://localhost:11434", null,
                 List.of("deepseek-r1:1.5b", "qwen2.5:0.5b", "qwen2.5-coder:3b", "llama3.2:3b"));

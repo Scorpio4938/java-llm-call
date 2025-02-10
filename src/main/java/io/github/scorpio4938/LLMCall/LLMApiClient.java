@@ -228,17 +228,18 @@ public class LLMApiClient {
             allModels.add(primaryModel);
             allModels.addAll(fallbackModels);
 
+            StringBuilder errors = new StringBuilder(); // Track all errors
             Exception lastError = null;
             for (String model : allModels) {
                 try {
                     return LLMApiClient.this.directCallLLM(model, data, params);
                 } catch (Exception e) {
+                    errors.append("Model ").append(model).append(" failed: ").append(e.getMessage()).append("\n");
                     lastError = e;
                     Debugger.log("Model " + model + " failed: " + e.getMessage());
                 }
-
             }
-            throw new Exception("All models failed", lastError);
+            throw new Exception("All models failed. Errors:\n" + errors, lastError);
         }
     }
 
