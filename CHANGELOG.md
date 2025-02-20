@@ -1,8 +1,21 @@
 # Changelog
 
+## [v1.0.1] - Minor Improvements
+
+### Features
+- Added Ollama API demo implementation
+
+### Fixes
+- Fixed JSON parsing edge cases
+- Corrected timeout handling in ModelChain
+
+### Improvements
+- Asynchronous API calls
+- Enhanced API error messages
+
 ## [v1.0.0] - General Functionalities
 
-### Added
+### Features
 - Introduced LLMApiClient for making HTTP requests to various language model APIs.
 - Implemented dynamic request building with LLMRequest and response parsing via LLMResponse.
 - Added a fallback mechanism through ModelChain, allowing for chained model calls when the primary model fails.
