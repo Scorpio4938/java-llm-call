@@ -8,7 +8,7 @@
 
   <groupId>io.github.scorpio4938</groupId>
   <artifactId>java-llm-call</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
 
   <packaging>jar</packaging>
 
