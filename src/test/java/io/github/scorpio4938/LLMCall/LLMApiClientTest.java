@@ -3,6 +3,8 @@ package io.github.scorpio4938.LLMCall;
 import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
+import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
+import io.github.scorpio4938.LLMCall.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.providers.Provider;
 import io.github.scorpio4938.LLMCall.providers.Providers;
 
@@ -229,5 +231,37 @@ public class LLMApiClientTest {
             client.directCallLLM("always-fail-model", data);
         });
         assertEquals(3, alwaysFailCounter.get(), "Should make 3 attempts (initial + 2 retries)");
+    }
+
+    @Test
+    public void testBasicPrompt() throws Exception {
+        Map<String, String> data = Map.of("user", "Hi");
+        BasicPrompt prompt = new BasicPrompt();
+        String result = client.directCallLLM("test-model", data, Map.of(), prompt);
+        assertEquals("Hello!", result);
+    }
+
+    @Test
+    public void testRequestConfig() throws Exception {
+        LLMRequestConfig config = LLMRequestConfig.newBuilder("test-model")
+                .withData(Map.of("user", "Hi"))
+                .withParams(Map.of("temperature", 0.7))
+                .withPrompt(new BasicPrompt())
+                .build();
+
+        String result = client.callLLM(config);
+        assertEquals("Hello!", result);
+    }
+
+    @Test
+    public void testModelChainWithPrompt() throws Exception {
+        client.setMaxRetries(1);
+        Map<String, String> data = Map.of("role", "user", "content", "Hi");
+
+        String result = client.callLLM("test-model", data)
+                .withPrompt(new BasicPrompt())
+                .execute();
+
+        assertEquals("Hello!", result);
     }
 }

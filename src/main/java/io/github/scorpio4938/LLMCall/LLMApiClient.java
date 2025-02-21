@@ -3,9 +3,11 @@ package io.github.scorpio4938.LLMCall;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
 import io.github.scorpio4938.LLMCall.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.messages.LLMResponse;
 import io.github.scorpio4938.LLMCall.messages.LLMResponseException;
+import io.github.scorpio4938.LLMCall.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
@@ -73,30 +75,31 @@ public class LLMApiClient {
      * @param data   The message data
      * @param params Additional parameters for the LLM call (e.g., max_tokens,
      *               temperature)
+     * @param prompt The prompt to use
      * @return JSON string representing the request body
      * @throws IllegalArgumentException if model is null or empty, or data is null
      * 
      * @since 1.0.0
      */
-    private String buildRequestBody(String model, Map<String, String> data, Map<String, Object> params) {
-        // Objects.requireNonNull(model, "Model must not be null");
-        // Objects.requireNonNull(data, "Data must not be null");
-        // Objects.requireNonNull(params, "Params must not be null");
-
+    private String buildRequestBody(String model, Map<String, String> data, Map<String, Object> params, Prompt prompt) {
         if (model.trim().isEmpty()) {
             throw new IllegalArgumentException("Model must not be empty");
         }
 
         Map<String, String> sortedData = MapSorter.sortByKeys(data);
         List<LLMRequest.Message> dataList = new ArrayList<>();
+
+        // Add prompt if provided
+        if (prompt != null) {
+            dataList.add(LLMRequest.createMessage(prompt.getRole(), prompt.getContent()));
+        }
+
         for (Map.Entry<String, String> entry : sortedData.entrySet()) {
             dataList.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
         }
 
-        // Create request with dynamic parameters
         LLMRequest request = new LLMRequest(provider.getModel(model), dataList);
         request.addParameters(params);
-
         return GSON.toJson(request);
     }
 
@@ -182,18 +185,53 @@ public class LLMApiClient {
      * @param model  The model to use
      * @param data   The message data
      * @param params Additional parameters for the LLM call
+     * @param prompt The prompt to use
      * @return The content of the first message in the response
      * @throws Exception                if there is an error while processing the
      *                                  request
      * @throws IllegalArgumentException if model is null or empty, or data is null
      * 
-     * @since 1.0.0
+     * @since 1.0.2
      */
-    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
-        String requestBody = buildRequestBody(model, data, params);
+    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params, Prompt prompt)
+            throws Exception {
+        String requestBody = buildRequestBody(model, data, params, prompt);
         String responseBody = sendRequestWithRetry(requestBody);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
+    }
+
+    /**
+     * Calls the LLM with the given model and message map using specified
+     * parameters.
+     *
+     * @param model  The model to use
+     * @param data   The message data
+     * @param params Additional parameters for the LLM call
+     * @return The content of the first message in the response
+     * @throws Exception if there's an error processing the request
+     * @since 1.0.0
+     */
+    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
+        return directCallLLM(model, data, params, null);
+    }
+
+    /**
+     * Calls the LLM with the given model and message map using default
+     * parameters.
+     *
+     * @param model  The model to use
+     * @param data   The message data
+     * @param prompt The prompt to use
+     * @return The content of the first message in the response
+     * @throws Exception                if there is an error while processing the
+     *                                  request
+     * @throws IllegalArgumentException if model is null or empty, or data is null
+     * 
+     * @since 1.0.2
+     */
+    public String directCallLLM(String model, Map<String, String> data, Prompt prompt) throws Exception {
+        return directCallLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS), prompt);
     }
 
     /**
@@ -244,6 +282,7 @@ public class LLMApiClient {
         private final Map<String, String> data;
         private final Map<String, Object> params;
         private final List<String> fallbackModels = new ArrayList<>();
+        private Prompt prompt;
 
         public ModelChain(String model, Map<String, String> data, Map<String, Object> params) {
             this.primaryModel = model;
@@ -265,6 +304,19 @@ public class LLMApiClient {
         }
 
         /**
+         * Sets the prompt for the model chain.
+         *
+         * @param prompt The prompt to set
+         * @return The updated ModelChain
+         * 
+         * @since 1.0.0
+         */
+        public ModelChain withPrompt(Prompt prompt) {
+            this.prompt = prompt;
+            return this;
+        }
+
+        /**
          * Executes the model chain.
          *
          * @return The content of the first message in the response
@@ -281,7 +333,7 @@ public class LLMApiClient {
             Exception lastError = null;
             for (String model : allModels) {
                 try {
-                    return LLMApiClient.this.directCallLLM(model, data, params);
+                    return LLMApiClient.this.directCallLLM(model, data, params, prompt);
                 } catch (Exception e) {
                     errors.append("Model ").append(model).append(" failed: ").append(e.getMessage()).append("\n");
                     lastError = e;
@@ -325,5 +377,35 @@ public class LLMApiClient {
             return statusCode == 429 || (statusCode >= 500 && statusCode < 600);
         }
         return e instanceof java.io.IOException; // Retry on network errors
+    }
+
+    /**
+     * Executes an LLM call using a pre-configured request object.
+     * 
+     * @param config Configured request parameters
+     * @return The content of the first message in the response
+     * @throws Exception If there's an error processing the request
+     * @see LLMRequestConfig
+     * @since 1.0.2
+     */
+    public String callLLM(LLMRequestConfig config) throws Exception {
+        return directCallLLM(
+                config.getModel(),
+                config.getData(),
+                config.getParams(),
+                config.getPrompt());
+    }
+
+    /**
+     * Alternative signature for directCallLLM using configuration object.
+     * 
+     * @param config Configured request parameters
+     * @return The content of the first message in the response
+     * @throws Exception If there's an error processing the request
+     * @see #callLLM(LLMRequestConfig)
+     * @since 1.0.2
+     */
+    public String directCallLLM(LLMRequestConfig config) throws Exception {
+        return callLLM(config);
     }
 }
