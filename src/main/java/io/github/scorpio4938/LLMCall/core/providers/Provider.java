@@ -1,4 +1,4 @@
-package io.github.scorpio4938.LLMCall.providers;
+package io.github.scorpio4938.LLMCall.core.providers;
 
 import java.util.List;
 

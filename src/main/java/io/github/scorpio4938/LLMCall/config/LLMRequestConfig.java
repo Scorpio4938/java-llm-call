@@ -3,7 +3,7 @@ package io.github.scorpio4938.LLMCall.config;
 import java.util.Map;
 import java.util.Objects;
 
-import io.github.scorpio4938.LLMCall.messages.prompts.Prompt;
+import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 
 /**
  * Configuration object for LLM API requests using builder pattern.

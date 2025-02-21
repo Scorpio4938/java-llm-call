@@ -1,6 +1,9 @@
-package io.github.scorpio4938.LLMCall.messages;
+package io.github.scorpio4938.LLMCall.core.messages;
 
 import org.junit.jupiter.api.Test;
+
+import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
+
 import java.util.List;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;

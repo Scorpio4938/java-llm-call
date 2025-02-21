@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
-import io.github.scorpio4938.LLMCall.messages.LLMRequest;
-import io.github.scorpio4938.LLMCall.messages.LLMResponse;
-import io.github.scorpio4938.LLMCall.messages.LLMResponseException;
-import io.github.scorpio4938.LLMCall.messages.prompts.Prompt;
-import io.github.scorpio4938.LLMCall.providers.Provider;
+import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
+import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
+import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
+import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
+import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 

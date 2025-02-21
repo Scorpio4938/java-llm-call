@@ -1,4 +1,4 @@
-package io.github.scorpio4938.LLMCall.messages.prompts;
+package io.github.scorpio4938.LLMCall.core.messages.prompts;
 
 /**
  * Interface for prompts used in LLM calls.

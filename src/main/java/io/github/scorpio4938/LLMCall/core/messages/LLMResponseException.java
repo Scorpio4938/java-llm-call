@@ -1,4 +1,4 @@
-package io.github.scorpio4938.LLMCall.messages;
+package io.github.scorpio4938.LLMCall.core.messages;
 
 import java.net.http.HttpResponse;
 
