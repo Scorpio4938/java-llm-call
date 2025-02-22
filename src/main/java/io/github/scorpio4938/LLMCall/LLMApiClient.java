@@ -11,6 +11,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
+import io.github.scorpio4938.LLMCall.core.LLMRequestBuilder;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
@@ -71,19 +72,23 @@ public class LLMApiClient {
     /**
      * Builds the JSON request body from the model, message map, and parameters.
      *
-     * @param model  The model to use
-     * @param data   The message data
-     * @param params Additional parameters for the LLM call (e.g., max_tokens,
-     *               temperature)
-     * @param prompt The prompt to use
+     * @param builder The LLM request builder
      * @return JSON string representing the request body
      * @throws IllegalArgumentException if model is null or empty, or data is null
      * 
      * @since 1.0.0
      */
-    private String buildRequestBody(String model, Map<String, String> data, Map<String, Object> params, Prompt prompt) {
+    private String buildRequestBody(LLMRequestBuilder builder) {
+        String model = builder.getModel();
+        Map<String, String> data = builder.getData();
+        Map<String, Object> params = builder.getParams();
+        Prompt prompt = builder.getPrompt();
+
         if (model.trim().isEmpty()) {
             throw new IllegalArgumentException("Model must not be empty");
+        }
+        if (data == null) {
+            throw new IllegalArgumentException("Message data must not be null");
         }
 
         Map<String, String> sortedData = MapSorter.sortByKeys(data);
@@ -180,78 +185,22 @@ public class LLMApiClient {
     }
 
     /**
-     * Calls the LLM with the given model, message map, and parameters.
-     *
-     * @param model  The model to use
-     * @param data   The message data
-     * @param params Additional parameters for the LLM call
-     * @param prompt The prompt to use
-     * @return The content of the first message in the response
-     * @throws Exception                if there is an error while processing the
-     *                                  request
-     * @throws IllegalArgumentException if model is null or empty, or data is null
+     * Unified LLM call using request builder
      * 
-     * @since 1.0.2
+     * @param builder The LLM request builder
+     * @return The content of the first message in the response
+     * @throws Exception if there's an error processing the request
+     * 
+     * @since 1.0.0
      */
-    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params, Prompt prompt)
-            throws Exception {
-        String requestBody = buildRequestBody(model, data, params, prompt);
+    public String directCallLLM(LLMRequestBuilder builder) throws Exception {
+        String requestBody = buildRequestBody(builder);
         String responseBody = sendRequestWithRetry(requestBody);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
     }
 
     /**
-     * Calls the LLM with the given model and message map using specified
-     * parameters.
-     *
-     * @param model  The model to use
-     * @param data   The message data
-     * @param params Additional parameters for the LLM call
-     * @return The content of the first message in the response
-     * @throws Exception if there's an error processing the request
-     * @since 1.0.0
-     */
-    public String directCallLLM(String model, Map<String, String> data, Map<String, Object> params) throws Exception {
-        return directCallLLM(model, data, params, null);
-    }
-
-    /**
-     * Calls the LLM with the given model and message map using default
-     * parameters.
-     *
-     * @param model  The model to use
-     * @param data   The message data
-     * @param prompt The prompt to use
-     * @return The content of the first message in the response
-     * @throws Exception                if there is an error while processing the
-     *                                  request
-     * @throws IllegalArgumentException if model is null or empty, or data is null
-     * 
-     * @since 1.0.2
-     */
-    public String directCallLLM(String model, Map<String, String> data, Prompt prompt) throws Exception {
-        return directCallLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS), prompt);
-    }
-
-    /**
-     * Calls the LLM with the given model and message map using default
-     * parameters.
-     *
-     * @param model The model to use
-     * @param data  The message data
-     * @return The content of the first message in the response
-     * @throws Exception                if there is an error while processing the
-     *                                  request
-     * @throws IllegalArgumentException if model is null or empty, or data is null
-     * 
-     * @since 1.0.0
-     */
-    public String directCallLLM(String model, Map<String, String> data) throws Exception {
-        return directCallLLM(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
-    }
-
-    /**
      * Calls the LLM with the given model and message map using default
      * parameters.
      *
@@ -261,87 +210,8 @@ public class LLMApiClient {
      * 
      * @since 1.0.0
      */
-    public ModelChain callLLM(String model, Map<String, String> data) {
-        return new ModelChain(model, data, Map.of("max_tokens", DEFAULT_MAX_TOKENS));
-    }
-
-    /**
-     * Calls the LLM with the given model and message map using the specified
-     * parameters.
-     *
-     * @param model  The model to use
-     * @param data   The message data
-     * @param params Additional parameters for the LLM call
-     * @return The content of the first message in the response
-     * 
-     * @since 1.0.0
-     */
-
-    public class ModelChain {
-        private final String primaryModel;
-        private final Map<String, String> data;
-        private final Map<String, Object> params;
-        private final List<String> fallbackModels = new ArrayList<>();
-        private Prompt prompt;
-
-        public ModelChain(String model, Map<String, String> data, Map<String, Object> params) {
-            this.primaryModel = model;
-            this.data = data;
-            this.params = params;
-        }
-
-        /**
-         * Adds fallback models to the chain.
-         *
-         * @param models The models to add
-         * @return The updated ModelChain
-         * 
-         * @since 1.0.0
-         */
-        public ModelChain withFallback(String... models) {
-            fallbackModels.addAll(Arrays.asList(models));
-            return this;
-        }
-
-        /**
-         * Sets the prompt for the model chain.
-         *
-         * @param prompt The prompt to set
-         * @return The updated ModelChain
-         * 
-         * @since 1.0.0
-         */
-        public ModelChain withPrompt(Prompt prompt) {
-            this.prompt = prompt;
-            return this;
-        }
-
-        /**
-         * Executes the model chain.
-         *
-         * @return The content of the first message in the response
-         * @throws Exception if all models fail
-         * 
-         * @since 1.0.0
-         */
-        public String execute() throws Exception {
-            List<String> allModels = new ArrayList<>();
-            allModels.add(primaryModel);
-            allModels.addAll(fallbackModels);
-
-            StringBuilder errors = new StringBuilder(); // Track all errors
-            Exception lastError = null;
-            for (String model : allModels) {
-                try {
-                    return LLMApiClient.this.directCallLLM(model, data, params, prompt);
-                } catch (Exception e) {
-                    errors.append("Model ").append(model).append(" failed: ").append(e.getMessage()).append("\n");
-                    lastError = e;
-                    Debugger.log("Model " + model + " failed: " + e.getMessage());
-                }
-            }
-            throw new Exception("All models failed. Errors:\n" + errors, lastError);
-        }
+    public ModelChain callLLM(LLMRequestBuilder builder) {
+        return new ModelChain(builder);
     }
 
     /**
@@ -353,10 +223,10 @@ public class LLMApiClient {
      * 
      * @since 1.0.1
      */
-    public CompletableFuture<String> asyncCallLLM(String model, Map<String, String> data) {
+    public CompletableFuture<String> asyncCallLLM(LLMRequestBuilder builder) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return directCallLLM(model, data);
+                return directCallLLM(builder);
             } catch (Exception e) {
                 throw new CompletionException(e);
             }
@@ -389,11 +259,11 @@ public class LLMApiClient {
      * @since 1.0.2
      */
     public String callLLM(LLMRequestConfig config) throws Exception {
-        return directCallLLM(
-                config.getModel(),
-                config.getData(),
-                config.getParams(),
-                config.getPrompt());
+        LLMRequestBuilder builder = new LLMRequestBuilder(config.getModel())
+                .withData(config.getData())
+                .withParams(config.getParams())
+                .withPrompt(config.getPrompt());
+        return directCallLLM(builder);
     }
 
     /**
@@ -407,5 +277,48 @@ public class LLMApiClient {
      */
     public String directCallLLM(LLMRequestConfig config) throws Exception {
         return callLLM(config);
+    }
+
+    public class ModelChain {
+        private final LLMRequestBuilder baseBuilder;
+        private final List<String> fallbackModels = new ArrayList<>();
+
+        public ModelChain(LLMRequestBuilder builder) {
+            this.baseBuilder = builder;
+        }
+
+        public ModelChain withFallback(String... models) {
+            fallbackModels.addAll(Arrays.asList(models));
+            return this;
+        }
+
+        public ModelChain withPrompt(Prompt prompt) {
+            baseBuilder.withPrompt(prompt);
+            return this;
+        }
+
+        public String execute() throws Exception {
+            List<String> allModels = new ArrayList<>();
+            allModels.add(baseBuilder.getModel());
+            allModels.addAll(fallbackModels);
+
+            StringBuilder errors = new StringBuilder();
+            Exception lastError = null;
+            for (String model : allModels) {
+                try {
+                    LLMRequestBuilder currentBuilder = new LLMRequestBuilder(model)
+                            .withData(baseBuilder.getData())
+                            .withParams(baseBuilder.getParams())
+                            .withPrompt(baseBuilder.getPrompt());
+
+                    return LLMApiClient.this.directCallLLM(currentBuilder);
+                } catch (Exception e) {
+                    errors.append("Model ").append(model).append(" failed: ").append(e.getMessage()).append("\n");
+                    lastError = e;
+                    Debugger.log("Model " + model + " failed: " + e.getMessage());
+                }
+            }
+            throw new Exception("All models failed. Errors:\n" + errors, lastError);
+        }
     }
 }

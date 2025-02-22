@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
 import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
+import io.github.scorpio4938.LLMCall.core.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
@@ -107,23 +108,23 @@ public class LLMApiClientTest {
     @Test
     public void testBasicCall() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.directCallLLM("test-model", data);
+        String result = client.directCallLLM(new LLMRequestBuilder("test-model").withData(data));
         assertEquals("Hello!", result);
     }
 
     @Test
     public void testCallWithParameters() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        Map<String, Object> params = Map.of("max_tokens", 50, "temperature", 0.7);
-
-        String result = client.directCallLLM("test-model", data, params);
+        String result = client.directCallLLM(new LLMRequestBuilder("test-model")
+                .withData(data)
+                .withParams(Map.of("max_tokens", 50, "temperature", 0.7)));
         assertEquals("Hello!", result);
     }
 
     @Test
     public void testInvalidInput() {
         assertThrows(IllegalArgumentException.class, () -> {
-            client.directCallLLM("", Map.of("role", "user"));
+            client.directCallLLM(new LLMRequestBuilder("").withData(Map.of("role", "user")));
         });
     }
 
@@ -163,7 +164,7 @@ public class LLMApiClientTest {
         client.setRetryDelay(50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.callLLM("bad-model", data)
+        String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data))
                 .withFallback("good-model")
                 .execute();
 
@@ -204,7 +205,7 @@ public class LLMApiClientTest {
     @Test
     public void testAsyncCall() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        CompletableFuture<String> future = client.asyncCallLLM("test-model", data);
+        CompletableFuture<String> future = client.asyncCallLLM(new LLMRequestBuilder("test-model").withData(data));
 
         String result = future.get(5, TimeUnit.SECONDS);
         assertEquals("Hello!", result);
@@ -216,7 +217,7 @@ public class LLMApiClientTest {
         client.setRetryDelay(100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.directCallLLM("retry-model", data);
+        String result = client.directCallLLM(new LLMRequestBuilder("retry-model").withData(data));
         assertEquals("Hello!", result);
         assertEquals(3, retryCounter.get(), "Should make 3 attempts");
     }
@@ -228,27 +229,26 @@ public class LLMApiClientTest {
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         assertThrows(Exception.class, () -> {
-            client.directCallLLM("always-fail-model", data);
+            client.directCallLLM(new LLMRequestBuilder("always-fail-model").withData(data));
         });
         assertEquals(3, alwaysFailCounter.get(), "Should make 3 attempts (initial + 2 retries)");
     }
 
     @Test
     public void testBasicPrompt() throws Exception {
-        Map<String, String> data = Map.of("user", "Hi");
-        BasicPrompt prompt = new BasicPrompt();
-        String result = client.directCallLLM("test-model", data, Map.of(), prompt);
+        String result = client.directCallLLM(new LLMRequestBuilder("test-model")
+                .withData(Map.of("user", "Hi"))
+                .withPrompt(new BasicPrompt()));
         assertEquals("Hello!", result);
     }
 
     @Test
     public void testRequestConfig() throws Exception {
-        LLMRequestConfig config = LLMRequestConfig.newBuilder("test-model")
-                .withData(Map.of("user", "Hi"))
-                .withParams(Map.of("temperature", 0.7))
-                .withPrompt(new BasicPrompt())
-                .build();
-
+        LLMRequestConfig config = new LLMRequestConfig(
+                new LLMRequestBuilder("test-model")
+                        .withData(Map.of("user", "Hi"))
+                        .withParams(Map.of("temperature", 0.7))
+                        .withPrompt(new BasicPrompt()));
         String result = client.callLLM(config);
         assertEquals("Hello!", result);
     }
@@ -258,10 +258,9 @@ public class LLMApiClientTest {
         client.setMaxRetries(1);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
-        String result = client.callLLM("test-model", data)
+        String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data))
                 .withPrompt(new BasicPrompt())
                 .execute();
-
         assertEquals("Hello!", result);
     }
 }
