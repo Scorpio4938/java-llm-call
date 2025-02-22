@@ -1,10 +1,25 @@
-package io.github.scorpio4938.LLMCall.core;
+package io.github.scorpio4938.LLMCall.core.builder;
 
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import java.util.Map;
 import java.util.Objects;
 import java.util.HashMap;
 
+/**
+ * Builder class for constructing LLM request configurations.
+ * 
+ * <p>
+ * Example usage:
+ * 
+ * <pre>{@code
+ * LLMRequestConfig config = LLMRequestConfig.newBuilder("gpt-4")
+ *         .withData(messageMap)
+ *         .withParams(params)
+ *         .withPrompt(new BasicPrompt())
+ * }</pre>
+ * 
+ * @since 1.0.2
+ */
 public class LLMRequestBuilder {
     private final String model;
     private Map<String, String> data;

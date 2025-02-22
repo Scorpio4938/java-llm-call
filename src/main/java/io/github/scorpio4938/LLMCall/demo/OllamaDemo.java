@@ -1,7 +1,7 @@
 package io.github.scorpio4938.LLMCall.demo;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
-import io.github.scorpio4938.LLMCall.core.LLMRequestBuilder;
+import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
 
 import java.util.Map;

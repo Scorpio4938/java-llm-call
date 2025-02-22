@@ -1,6 +1,6 @@
 package io.github.scorpio4938.LLMCall.config;
 
-import io.github.scorpio4938.LLMCall.core.LLMRequestBuilder;
+import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import java.util.Map;
 import java.util.Objects;
