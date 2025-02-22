@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
+import io.github.scorpio4938.LLMCall.core.RequestHandler;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
@@ -37,8 +38,7 @@ public class LLMApiClient {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
     private static final int DEFAULT_MAX_TOKENS = 100;
 
-    private final Provider provider;
-    private final HttpClient httpClient;
+    private final RequestHandler requestHandler;
 
     private int maxRetries = 3;
     private long retryDelayMillis = 1000;
@@ -53,7 +53,7 @@ public class LLMApiClient {
      */
     public LLMApiClient(Provider provider) {
         this(provider, HttpClient.newBuilder()
-                .connectTimeout(DEFAULT_TIMEOUT)
+                .connectTimeout(Duration.ofSeconds(30))
                 .build());
     }
 
@@ -65,123 +65,7 @@ public class LLMApiClient {
      * @throws IllegalArgumentException if provider or httpClient is null
      */
     public LLMApiClient(Provider provider, HttpClient httpClient) {
-        this.provider = Objects.requireNonNull(provider, "Provider must not be null");
-        this.httpClient = Objects.requireNonNull(httpClient, "HttpClient must not be null");
-    }
-
-    /**
-     * Builds the JSON request body from the model, message map, and parameters.
-     *
-     * @param builder The LLM request builder
-     * @return JSON string representing the request body
-     * @throws IllegalArgumentException if model is null or empty, or data is null
-     * 
-     * @since 1.0.0
-     */
-    private String buildRequestBody(LLMRequestBuilder builder) {
-        String model = builder.getModel();
-        Map<String, String> data = builder.getData();
-        Map<String, Object> params = builder.getParams();
-        Prompt prompt = builder.getPrompt();
-
-        if (model.trim().isEmpty()) {
-            throw new IllegalArgumentException("Model must not be empty");
-        }
-        if (data == null) {
-            throw new IllegalArgumentException("Message data must not be null");
-        }
-
-        Map<String, String> sortedData = MapSorter.sortByKeys(data);
-        List<LLMRequest.Message> dataList = new ArrayList<>();
-
-        // Add prompt if provided
-        if (prompt != null) {
-            dataList.add(LLMRequest.createMessage(prompt.getRole(), prompt.getContent()));
-        }
-
-        for (Map.Entry<String, String> entry : sortedData.entrySet()) {
-            dataList.add(LLMRequest.createMessage(entry.getKey(), entry.getValue()));
-        }
-
-        LLMRequest request = new LLMRequest(provider.getModel(model), dataList);
-        request.addParameters(params);
-        return GSON.toJson(request);
-    }
-
-    /**
-     * Sends HTTP request to the provider's API.
-     *
-     * @param requestBody The request body to send
-     * @return The response body
-     * @throws Exception if there is an error while sending the request
-     * 
-     * @since 1.0.0
-     */
-    @SuppressWarnings("unused")
-    private String sendRequest(String requestBody) throws Exception {
-        String apiUrl = provider.getUrl();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + provider.getKey())
-                .timeout(DEFAULT_TIMEOUT)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        Debugger.log("Sending request to: " + apiUrl);
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() >= 400) {
-            throw new LLMResponseException(response);
-        }
-
-        Debugger.log("Response received: " + response.body());
-        return response.body();
-    }
-
-    /**
-     * Sends HTTP request to the provider's API with retry logic.
-     *
-     * @param requestBody The request body to send
-     * @return The response body
-     * @throws Exception if there is an error while sending the request
-     * 
-     * @since 1.0.1
-     */
-    private String sendRequestWithRetry(String requestBody) throws Exception {
-        String apiUrl = provider.getUrl();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + provider.getKey())
-                .timeout(DEFAULT_TIMEOUT)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        int totalAttempts = maxRetries + 1;
-        Exception lastError = null;
-
-        for (int attempt = 1; attempt <= totalAttempts; attempt++) {
-            try {
-                Debugger.log("Attempt %d/%d to: %s".formatted(attempt, totalAttempts, apiUrl));
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() >= 400) {
-                    throw new LLMResponseException(response);
-                }
-
-                Debugger.log("Response received: " + response.body());
-                return response.body();
-            } catch (Exception e) {
-                lastError = e;
-                if (attempt < totalAttempts && shouldRetry(e)) {
-                    Debugger.log("Retrying in %dms...".formatted(retryDelayMillis));
-                    Thread.sleep(retryDelayMillis);
-                }
-            }
-        }
-
-        throw lastError;
+        this.requestHandler = new RequestHandler(provider, httpClient);
     }
 
     /**
@@ -194,8 +78,8 @@ public class LLMApiClient {
      * @since 1.0.0
      */
     public String directCallLLM(LLMRequestBuilder builder) throws Exception {
-        String requestBody = buildRequestBody(builder);
-        String responseBody = sendRequestWithRetry(requestBody);
+        String requestBody = requestHandler.buildRequestBody(builder);
+        String responseBody = requestHandler.sendRequestWithRetry(requestBody, maxRetries, retryDelayMillis);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
     }
@@ -239,44 +123,6 @@ public class LLMApiClient {
 
     public void setRetryDelay(long delay, java.util.concurrent.TimeUnit unit) {
         this.retryDelayMillis = unit.toMillis(delay);
-    }
-
-    private boolean shouldRetry(Exception e) {
-        if (e instanceof LLMResponseException) {
-            int statusCode = ((LLMResponseException) e).getStatusCode();
-            return statusCode == 429 || (statusCode >= 500 && statusCode < 600);
-        }
-        return e instanceof java.io.IOException; // Retry on network errors
-    }
-
-    /**
-     * Executes an LLM call using a pre-configured request object.
-     * 
-     * @param config Configured request parameters
-     * @return The content of the first message in the response
-     * @throws Exception If there's an error processing the request
-     * @see LLMRequestConfig
-     * @since 1.0.2
-     */
-    public String callLLM(LLMRequestConfig config) throws Exception {
-        LLMRequestBuilder builder = new LLMRequestBuilder(config.getModel())
-                .withData(config.getData())
-                .withParams(config.getParams())
-                .withPrompt(config.getPrompt());
-        return directCallLLM(builder);
-    }
-
-    /**
-     * Alternative signature for directCallLLM using configuration object.
-     * 
-     * @param config Configured request parameters
-     * @return The content of the first message in the response
-     * @throws Exception If there's an error processing the request
-     * @see #callLLM(LLMRequestConfig)
-     * @since 1.0.2
-     */
-    public String directCallLLM(LLMRequestConfig config) throws Exception {
-        return callLLM(config);
     }
 
     public class ModelChain {

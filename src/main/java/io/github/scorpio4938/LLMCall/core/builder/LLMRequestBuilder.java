@@ -4,6 +4,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import java.util.Map;
 import java.util.Objects;
 import java.util.HashMap;
+import java.util.Collections;
 
 /**
  * Builder class for constructing LLM request configurations.
@@ -32,7 +33,7 @@ public class LLMRequestBuilder {
     }
 
     public LLMRequestBuilder withData(Map<String, String> data) {
-        this.data = Objects.requireNonNull(data, "Data cannot be null");
+        this.data = data;
         return this;
     }
 
@@ -87,7 +88,7 @@ public class LLMRequestBuilder {
     }
 
     public Map<String, Object> getParams() {
-        return new HashMap<>(params);
+        return Collections.unmodifiableMap(new HashMap<>(params));
     }
 
     public Prompt getPrompt() {

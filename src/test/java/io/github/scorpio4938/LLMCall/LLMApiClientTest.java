@@ -243,17 +243,6 @@ public class LLMApiClientTest {
     }
 
     @Test
-    public void testRequestConfig() throws Exception {
-        LLMRequestConfig config = new LLMRequestConfig(
-                new LLMRequestBuilder("test-model")
-                        .withData(Map.of("user", "Hi"))
-                        .withParams(Map.of("temperature", 0.7))
-                        .withPrompt(new BasicPrompt()));
-        String result = client.callLLM(config);
-        assertEquals("Hello!", result);
-    }
-
-    @Test
     public void testModelChainWithPrompt() throws Exception {
         client.setMaxRetries(1);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
