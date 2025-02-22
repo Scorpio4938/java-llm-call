@@ -22,7 +22,7 @@ public class OllamaDemo {
                     "content", "Hello, how are you?");
 
             String response = client
-                    .directCallLLM(new LLMRequestBuilder("qwen2.5:0.5b")
+                    .directCallLLM(new LLMRequestBuilder("deepseek-r1:1.5b")
                             .withData(message));
             System.out.println("LLM Response: " + response);
 
