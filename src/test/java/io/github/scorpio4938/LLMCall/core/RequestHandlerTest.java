@@ -36,7 +36,7 @@ class RequestHandlerTest {
                 .withPrompt(new BasicPrompt())
                 .withParams(Map.of("temperature", 0.7));
 
-        String json = handler.buildRequestBody(builder);
+        String json = handler.buildRequest(builder);
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
 
         assertEquals("test-model", jsonObject.get("model").getAsString());
@@ -50,7 +50,7 @@ class RequestHandlerTest {
                 .withData(Map.of("user", "Hello", "assistant", "Hi"))
                 .withPrompt(new BasicPrompt("system", "Be helpful"));
 
-        String json = handler.buildRequestBody(builder);
+        String json = handler.buildRequest(builder);
         JsonObject firstMessage = JsonParser.parseString(json)
                 .getAsJsonObject()
                 .get("messages").getAsJsonArray()
@@ -63,9 +63,9 @@ class RequestHandlerTest {
     @Test
     void shouldThrowOnInvalidInput() {
         assertThrows(IllegalArgumentException.class, () -> 
-            handler.buildRequestBody(new LLMRequestBuilder("")));
+            handler.buildRequest(new LLMRequestBuilder("")));
         
         assertThrows(IllegalArgumentException.class, () -> 
-            handler.buildRequestBody(new LLMRequestBuilder("model").withData(null)));
+            handler.buildRequest(new LLMRequestBuilder("model").withData(null)));
     }
 } 

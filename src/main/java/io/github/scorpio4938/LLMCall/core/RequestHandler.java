@@ -22,87 +22,65 @@ import java.util.Map;
 import java.util.Objects;
 
 public class RequestHandler {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new Gson();
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
 
     private final Provider provider;
-    private final HttpClient httpClient;
+    private final HttpClient client;
 
-    public RequestHandler(Provider provider, HttpClient httpClient) {
-        this.provider = Objects.requireNonNull(provider, "Provider must not be null");
-        this.httpClient = Objects.requireNonNull(httpClient, "HttpClient must not be null");
+    public RequestHandler(Provider provider, HttpClient client) {
+        this.provider = Objects.requireNonNull(provider);
+        this.client = Objects.requireNonNull(client);
     }
 
-    public String buildRequestBody(LLMRequestBuilder builder) {
+    public String buildRequest(LLMRequestBuilder builder) {
         String model = builder.getModel();
         Map<String, String> data = builder.getData();
-        Map<String, Object> params = builder.getParams();
-        Prompt prompt = builder.getPrompt();
 
-        validateInputs(model, data);
+        validate(model, data);
 
-        List<LLMRequest.Message> dataList = buildMessageList(prompt, data);
-
-        Debugger.log("Data list: " + dataList.toString());
-
-        LLMRequest request = createLLMRequest(model, dataList, params);
-
-        Debugger.log("Request: " + request);
-
-        // Merge parameters directly into root JSON object
-        JsonObject jsonObject = GSON.toJsonTree(request).getAsJsonObject();
-        params.forEach((k, v) -> jsonObject.add(k, GSON.toJsonTree(v)));
-
-        Debugger.log("Request body: " + GSON.toJson(jsonObject));
-
-        return GSON.toJson(jsonObject);
-        // return GSON.toJson(request);
-    }
-
-    private void validateInputs(String model, Map<String, String> data) {
-        if (model == null || model.trim().isEmpty()) {
-            throw new IllegalArgumentException("Model must not be empty");
-        }
-        if (data == null) {
-            throw new IllegalArgumentException("Message data must not be null");
-        }
-        if (data.isEmpty()) {
-            throw new IllegalArgumentException("Message data must not be empty");
-        }
-    }
-
-    private List<LLMRequest.Message> buildMessageList(Prompt prompt, Map<String, String> data) {
-        Map<String, String> sortedData = MapSorter.sortByKeys(data);
-        List<LLMRequest.Message> dataList = new ArrayList<>();
-
-        if (prompt != null) {
-            dataList.add(LLMRequest.createMessage(prompt.getRole(), prompt.getContent()));
+        List<LLMRequest.Message> messages = new ArrayList<>();
+        if (builder.getPrompt() != null) {
+            messages.add(createMessage(builder.getPrompt()));
         }
 
-        sortedData.forEach((role, content) -> {
-            if (role.equalsIgnoreCase("content")) {
-                dataList.add(LLMRequest.createMessage("user", content));
-            }
-            // else {
-            // dataList.add(LLMRequest.createMessage(role, content));
-            // }
-        });
-        return dataList;
+        data.forEach((role, content) -> messages.add(new LLMRequest.Message(role, content)));
+
+        JsonObject body = new JsonObject();
+        body.addProperty("model", provider.getModel(model));
+        body.add("messages", GSON.toJsonTree(messages));
+        builder.getParams().forEach((k, v) -> body.add(k, GSON.toJsonTree(v)));
+
+        return GSON.toJson(body);
     }
 
-    private LLMRequest createLLMRequest(String model, List<LLMRequest.Message> dataList, Map<String, Object> params) {
-        return new LLMRequest(provider.getModel(model), dataList);
-    }
+    public String send(String requestBody) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(provider.getUrl()))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + provider.getKey())
+                .timeout(DEFAULT_TIMEOUT)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
 
-    public String sendRequest(String requestBody) throws Exception {
-        HttpRequest request = buildBaseRequest(requestBody);
-        Debugger.log("Sending request to: " + provider.getUrl());
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        validateResponse(response);
-
-        Debugger.log("Response received: " + response.body());
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 400) {
+            throw new LLMResponseException(response);
+        }
         return response.body();
+    }
+
+    private void validate(String model, Map<String, String> data) {
+        if (model == null || model.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid model");
+        }
+        if (data == null || data.isEmpty()) {
+            throw new IllegalArgumentException("Message data required");
+        }
+    }
+
+    private LLMRequest.Message createMessage(Prompt prompt) {
+        return new LLMRequest.Message(prompt.getRole(), prompt.getContent());
     }
 
     public String sendRequestWithRetry(String requestBody, int maxRetries, long retryDelayMillis) throws Exception {
@@ -113,7 +91,7 @@ public class RequestHandler {
         for (int attempt = 1; attempt <= totalAttempts; attempt++) {
             try {
                 Debugger.log("Attempt %d/%d to: %s".formatted(attempt, totalAttempts, provider.getUrl()));
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 validateResponse(response);
 
                 Debugger.log("Response received: " + response.body());

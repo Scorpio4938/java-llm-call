@@ -78,7 +78,7 @@ public class LLMApiClient {
      * @since 1.0.0
      */
     public String directCallLLM(LLMRequestBuilder builder) throws Exception {
-        String requestBody = requestHandler.buildRequestBody(builder);
+        String requestBody = requestHandler.buildRequest(builder);
         String responseBody = requestHandler.sendRequestWithRetry(requestBody, maxRetries, retryDelayMillis);
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
