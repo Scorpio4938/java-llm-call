@@ -24,7 +24,7 @@ import java.util.Objects;
 public class RequestHandler {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
-    
+
     private final Provider provider;
     private final HttpClient httpClient;
 
@@ -40,15 +40,23 @@ public class RequestHandler {
         Prompt prompt = builder.getPrompt();
 
         validateInputs(model, data);
-        
+
         List<LLMRequest.Message> dataList = buildMessageList(prompt, data);
+
+        Debugger.log("Data list: " + dataList.toString());
+
         LLMRequest request = createLLMRequest(model, dataList, params);
-        
+
+        Debugger.log("Request: " + request);
+
         // Merge parameters directly into root JSON object
         JsonObject jsonObject = GSON.toJsonTree(request).getAsJsonObject();
         params.forEach((k, v) -> jsonObject.add(k, GSON.toJsonTree(v)));
-        
+
+        Debugger.log("Request body: " + GSON.toJson(jsonObject));
+
         return GSON.toJson(jsonObject);
+        // return GSON.toJson(request);
     }
 
     private void validateInputs(String model, Map<String, String> data) {
@@ -71,25 +79,28 @@ public class RequestHandler {
             dataList.add(LLMRequest.createMessage(prompt.getRole(), prompt.getContent()));
         }
 
-        sortedData.forEach((k, v) -> 
-            dataList.add(LLMRequest.createMessage(k, v))
-        );
+        sortedData.forEach((role, content) -> {
+            if (role.equalsIgnoreCase("content")) {
+                dataList.add(LLMRequest.createMessage("user", content));
+            }
+            // else {
+            // dataList.add(LLMRequest.createMessage(role, content));
+            // }
+        });
         return dataList;
     }
 
     private LLMRequest createLLMRequest(String model, List<LLMRequest.Message> dataList, Map<String, Object> params) {
-        LLMRequest request = new LLMRequest(provider.getModel(model), dataList);
-        request.addParameters(params);
-        return request;
+        return new LLMRequest(provider.getModel(model), dataList);
     }
 
     public String sendRequest(String requestBody) throws Exception {
         HttpRequest request = buildBaseRequest(requestBody);
         Debugger.log("Sending request to: " + provider.getUrl());
-        
+
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         validateResponse(response);
-        
+
         Debugger.log("Response received: " + response.body());
         return response.body();
     }
@@ -104,7 +115,7 @@ public class RequestHandler {
                 Debugger.log("Attempt %d/%d to: %s".formatted(attempt, totalAttempts, provider.getUrl()));
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                 validateResponse(response);
-                
+
                 Debugger.log("Response received: " + response.body());
                 return response.body();
             } catch (Exception e) {
@@ -141,4 +152,4 @@ public class RequestHandler {
         }
         return e instanceof java.io.IOException;
     }
-} 
+}

@@ -9,25 +9,10 @@ import java.util.Map;
 public class LLMRequest {
     private final String model;
     private final List<Message> messages;
-    private final Map<String, Object> parameters;
 
     public LLMRequest(String model, List<Message> messages) {
         this.model = model;
         this.messages = messages;
-        this.parameters = new HashMap<>();
-    }
-
-    /**
-     * Adds parameters to the request.
-     *
-     * @param params The parameters to add
-     * 
-     * @since 1.0.0
-     */
-    public void addParameters(Map<String, Object> params) {
-        if (params != null) {
-            parameters.putAll(params);
-        }
     }
 
     /**
@@ -50,15 +35,19 @@ public class LLMRequest {
         return messages;
     }
 
-    public Map<String, Object> getParameters() {
-        return parameters;
-    }
-
     public static class Message {
         private final String role;
         private final String content;
 
         public Message(String role, String content) {
+            // Validate role/content ordering
+            if (role == null || role.isEmpty()) {
+                throw new IllegalArgumentException("Role cannot be empty");
+            }
+            if (content == null || content.isEmpty()) {
+                throw new IllegalArgumentException("Content cannot be empty");
+            }
+            
             this.role = role;
             this.content = content;
         }
