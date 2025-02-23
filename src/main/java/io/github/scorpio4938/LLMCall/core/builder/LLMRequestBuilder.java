@@ -94,4 +94,11 @@ public class LLMRequestBuilder {
     public Prompt getPrompt() {
         return prompt;
     }
+
+    public LLMRequestBuilder cloneWithModel(String newModel) {
+        return new LLMRequestBuilder(newModel)
+                .withData(this.data)
+                .withParams(this.params)
+                .withPrompt(this.prompt);
+    }
 }

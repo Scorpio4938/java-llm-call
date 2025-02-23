@@ -160,8 +160,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainFallback() throws Exception {
-        client.setMaxRetries(1); // Only 1 retry per model
-        client.setRetryDelay(50, TimeUnit.MILLISECONDS);
+        client.updateRetryConfig(1, 50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data))
@@ -213,8 +212,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testRetrySuccessAfterTwoFailures() throws Exception {
-        client.setMaxRetries(3);
-        client.setRetryDelay(100, TimeUnit.MILLISECONDS);
+        client.updateRetryConfig(3, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.directCallLLM(new LLMRequestBuilder("retry-model").withData(data));
@@ -224,8 +222,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testAllRetriesFail() {
-        client.setMaxRetries(2);
-        client.setRetryDelay(100, TimeUnit.MILLISECONDS);
+        client.updateRetryConfig(2, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         assertThrows(Exception.class, () -> {
@@ -244,11 +241,11 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainWithPrompt() throws Exception {
-        client.setMaxRetries(1);
+        client.updateRetryConfig(1, 50, TimeUnit.MILLISECONDS);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
-        String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data))
-                .withPrompt(new BasicPrompt())
+        String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data)
+                .withPrompt(new BasicPrompt()))
                 .execute();
         assertEquals("Hello!", result);
     }

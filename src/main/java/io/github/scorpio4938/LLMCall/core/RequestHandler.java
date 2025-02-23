@@ -2,7 +2,10 @@ package io.github.scorpio4938.LLMCall.core;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import io.github.scorpio4938.LLMCall.config.RetryConfig;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
@@ -21,9 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Handles the request to the LLM provider
+ * 
+ * @since 1.0.2
+ */
 public class RequestHandler {
-    private static final Gson GSON = new Gson();
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    private static final Gson GSON = new GsonBuilder().create();
 
     private final Provider provider;
     private final HttpClient client;
@@ -33,44 +40,39 @@ public class RequestHandler {
         this.client = Objects.requireNonNull(client);
     }
 
+    /**
+     * Builds the request to the LLM provider
+     * 
+     * @param builder The builder to build the request
+     * @return The request body
+     * 
+     * @since 1.0.2
+     */
     public String buildRequest(LLMRequestBuilder builder) {
-        String model = builder.getModel();
-        Map<String, String> data = builder.getData();
-
-        validate(model, data);
-
-        List<LLMRequest.Message> messages = new ArrayList<>();
-        if (builder.getPrompt() != null) {
-            messages.add(createMessage(builder.getPrompt()));
-        }
-
-        data.forEach((role, content) -> messages.add(new LLMRequest.Message(role, content)));
+        validateRequest(builder);
 
         JsonObject body = new JsonObject();
-        body.addProperty("model", provider.getModel(model));
-        body.add("messages", GSON.toJsonTree(messages));
+        body.addProperty("model", provider.getModel(builder.getModel()));
+        body.add("messages", buildMessages(builder));
         builder.getParams().forEach((k, v) -> body.add(k, GSON.toJsonTree(v)));
 
         return GSON.toJson(body);
     }
 
-    public String send(String requestBody) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(provider.getUrl()))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + provider.getKey())
-                .timeout(DEFAULT_TIMEOUT)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new LLMResponseException(response);
+    private JsonElement buildMessages(LLMRequestBuilder builder) {
+        List<LLMRequest.Message> messages = new ArrayList<>();
+        if (builder.getPrompt() != null) {
+            messages.add(new LLMRequest.Message(builder.getPrompt().getRole(),
+                    builder.getPrompt().getContent()));
         }
-        return response.body();
+        builder.getData().forEach((role, content) -> messages.add(new LLMRequest.Message(role, content)));
+        return GSON.toJsonTree(messages);
     }
 
-    private void validate(String model, Map<String, String> data) {
+    private void validateRequest(LLMRequestBuilder builder) {
+        String model = builder.getModel();
+        Map<String, String> data = builder.getData();
+
         if (model == null || model.trim().isEmpty()) {
             throw new IllegalArgumentException("Invalid model");
         }
@@ -79,55 +81,87 @@ public class RequestHandler {
         }
     }
 
-    private LLMRequest.Message createMessage(Prompt prompt) {
-        return new LLMRequest.Message(prompt.getRole(), prompt.getContent());
+    /**
+     * Sends the request to the LLM provider
+     * 
+     * @param requestBody The request body
+     * @return The response body
+     * 
+     * @since 1.0.2
+     */
+    public String send(String requestBody) throws Exception {
+        HttpResponse<String> response = client.send(
+                buildHttpRequest(requestBody),
+                HttpResponse.BodyHandlers.ofString());
+        validateResponse(response);
+        return response.body();
     }
 
-    public String sendRequestWithRetry(String requestBody, int maxRetries, long retryDelayMillis) throws Exception {
-        HttpRequest request = buildBaseRequest(requestBody);
-        int totalAttempts = maxRetries + 1;
+    private HttpRequest buildHttpRequest(String requestBody) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(provider.getUrl()))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + provider.getKey())
+                .timeout(Duration.ofSeconds(30))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+    }
+
+    /**
+     * Sends the request to the LLM provider with retry
+     * 
+     * @param requestBody The request body
+     * @param retryConfig The retry configuration
+     * @return The response body
+     * 
+     * @since 1.0.2
+     */
+    public String sendRequestWithRetry(String requestBody, RetryConfig retryConfig)
+            throws Exception {
+        HttpRequest request = buildHttpRequest(requestBody);
         Exception lastError = null;
 
-        for (int attempt = 1; attempt <= totalAttempts; attempt++) {
+        for (int attempt = 1; attempt <= retryConfig.getMaxRetries() + 1; attempt++) {
             try {
-                Debugger.log("Attempt %d/%d to: %s".formatted(attempt, totalAttempts, provider.getUrl()));
+                Debugger.log("Attempt %d/%d to: %s".formatted(
+                        attempt, retryConfig.getMaxRetries() + 1, provider.getUrl()));
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 validateResponse(response);
-
-                Debugger.log("Response received: " + response.body());
                 return response.body();
             } catch (Exception e) {
                 lastError = e;
-                if (attempt < totalAttempts && shouldRetry(e)) {
-                    Debugger.log("Retrying in %dms...".formatted(retryDelayMillis));
-                    Thread.sleep(retryDelayMillis);
+                if (shouldRetryRequest(e, attempt, retryConfig.getMaxRetries())) {
+                    Debugger.log("Retrying in %dms...".formatted(retryConfig.getRetryDelayMillis()));
+                    Thread.sleep(retryConfig.getRetryDelayMillis());
                 }
             }
         }
         throw lastError;
     }
 
-    private HttpRequest buildBaseRequest(String requestBody) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(provider.getUrl()))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + provider.getKey())
-                .timeout(DEFAULT_TIMEOUT)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
+    private boolean shouldRetryRequest(Exception e, int attempt, int maxRetries) {
+        return attempt <= maxRetries && shouldRetry(e);
     }
 
-    private void validateResponse(HttpResponse<String> response) {
-        if (response.statusCode() >= 400) {
-            throw new LLMResponseException(response);
-        }
-    }
-
+    /**
+     * Determines if the request should be retried
+     * 
+     * @param e The exception
+     * @return True if the request should be retried, false otherwise
+     * 
+     * @since 1.0.2
+     */
     private boolean shouldRetry(Exception e) {
         if (e instanceof LLMResponseException) {
             int statusCode = ((LLMResponseException) e).getStatusCode();
             return statusCode == 429 || (statusCode >= 500 && statusCode < 600);
         }
         return e instanceof java.io.IOException;
+    }
+
+    private void validateResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 400) {
+            throw new LLMResponseException(response);
+        }
     }
 }

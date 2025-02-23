@@ -13,6 +13,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
+import io.github.scorpio4938.LLMCall.config.RetryConfig;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simplified LLM API Client for making requests to language models.
@@ -35,13 +37,9 @@ import java.util.concurrent.CompletionException;
  */
 public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
-    private static final int DEFAULT_MAX_TOKENS = 100;
-
+    
     private final RequestHandler requestHandler;
-
-    private int maxRetries = 3;
-    private long retryDelayMillis = 1000;
+    private final RetryConfig config;
 
     /**
      * Constructs a new LLMApiClient with the specified provider.
@@ -52,9 +50,22 @@ public class LLMApiClient {
      * @since 1.0.0
      */
     public LLMApiClient(Provider provider) {
-        this(provider, HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
-                .build());
+        this(provider, new RetryConfig());
+    }
+
+    /**
+     * Constructs a new LLMApiClient with custom HttpClient configuration.
+     *
+     * @param provider   The LLM provider to use (must not be null)
+     * @param config     Custom client configuration (must not be null)
+     * @throws IllegalArgumentException if provider or config is null
+     */
+    public LLMApiClient(Provider provider, RetryConfig config) {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(config.getConnectionTimeout())
+                .build();
+        this.requestHandler = new RequestHandler(provider, httpClient);
+        this.config = config;
     }
 
     /**
@@ -65,7 +76,20 @@ public class LLMApiClient {
      * @throws IllegalArgumentException if provider or httpClient is null
      */
     public LLMApiClient(Provider provider, HttpClient httpClient) {
+        this(provider, httpClient, new RetryConfig());
+    }
+
+    /**
+     * Constructs a new LLMApiClient with custom HttpClient configuration.
+     *
+     * @param provider   The LLM provider to use (must not be null)
+     * @param httpClient Custom HttpClient instance (must not be null)
+     * @param config     Custom client configuration (must not be null)
+     * @throws IllegalArgumentException if provider, httpClient, or config is null
+     */
+    public LLMApiClient(Provider provider, HttpClient httpClient, RetryConfig config) {
         this.requestHandler = new RequestHandler(provider, httpClient);
+        this.config = config;
     }
 
     /**
@@ -79,7 +103,11 @@ public class LLMApiClient {
      */
     public String directCallLLM(LLMRequestBuilder builder) throws Exception {
         String requestBody = requestHandler.buildRequest(builder);
-        String responseBody = requestHandler.sendRequestWithRetry(requestBody, maxRetries, retryDelayMillis);
+        String responseBody = requestHandler.sendRequestWithRetry(requestBody, config);
+        return parseResponse(responseBody);
+    }
+
+    private String parseResponse(String responseBody) {
         LLMResponse response = GSON.fromJson(responseBody, LLMResponse.class);
         return response.getFirstMessageContent();
     }
@@ -117,20 +145,20 @@ public class LLMApiClient {
         });
     }
 
-    public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
+    public void updateRetryConfig(int maxRetries, long delay, TimeUnit unit) {
+        config.update(maxRetries, unit.toMillis(delay));
     }
 
-    public void setRetryDelay(long delay, java.util.concurrent.TimeUnit unit) {
-        this.retryDelayMillis = unit.toMillis(delay);
+    public void setConnectionTimeout(Duration timeout) {
+        config.setConnectionTimeout(timeout);
     }
 
     public class ModelChain {
-        private final LLMRequestBuilder baseBuilder;
+        private final LLMRequestBuilder builder;
         private final List<String> fallbackModels = new ArrayList<>();
 
         public ModelChain(LLMRequestBuilder builder) {
-            this.baseBuilder = builder;
+            this.builder = builder;
         }
 
         public ModelChain withFallback(String... models) {
@@ -138,32 +166,25 @@ public class LLMApiClient {
             return this;
         }
 
-        public ModelChain withPrompt(Prompt prompt) {
-            baseBuilder.withPrompt(prompt);
-            return this;
-        }
-
         public String execute() throws Exception {
             List<String> allModels = new ArrayList<>();
-            allModels.add(baseBuilder.getModel());
+            allModels.add(builder.getModel());
             allModels.addAll(fallbackModels);
 
-            StringBuilder errors = new StringBuilder();
             Exception lastError = null;
+            StringBuilder errors = new StringBuilder();
+
             for (String model : allModels) {
                 try {
-                    LLMRequestBuilder currentBuilder = new LLMRequestBuilder(model)
-                            .withData(baseBuilder.getData())
-                            .withParams(baseBuilder.getParams())
-                            .withPrompt(baseBuilder.getPrompt());
-
-                    return LLMApiClient.this.directCallLLM(currentBuilder);
+                    return directCallLLM(builder.cloneWithModel(model));
                 } catch (Exception e) {
-                    errors.append("Model ").append(model).append(" failed: ").append(e.getMessage()).append("\n");
+                    String errorMsg = "Model " + model + " failed: " + e.getMessage();
+                    errors.append(errorMsg).append("\n");
+                    Debugger.log(errorMsg);
                     lastError = e;
-                    Debugger.log("Model " + model + " failed: " + e.getMessage());
                 }
             }
+            
             throw new Exception("All models failed. Errors:\n" + errors, lastError);
         }
     }
