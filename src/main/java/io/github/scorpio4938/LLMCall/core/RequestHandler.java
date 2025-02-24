@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import io.github.scorpio4938.LLMCall.config.RetryConfig;
+import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
@@ -102,7 +102,7 @@ public class RequestHandler {
      */
     public String sendRequestWithRetry(String requestBody, LLMRequestBuilder builder)
             throws Exception {
-        RetryConfig retryConfig = builder.getRetryConfig();
+        DefaultRetry retryConfig = builder.getRetryConfig();
         HttpRequest request = buildHttpRequest(requestBody, retryConfig.getConnectionTimeout());
         Exception lastError = null;
 

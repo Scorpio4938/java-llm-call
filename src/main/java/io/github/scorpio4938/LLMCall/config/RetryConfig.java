@@ -1,84 +1,20 @@
 package io.github.scorpio4938.LLMCall.config;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Configuration for HTTP request behavior including retries and timeouts.
+ * Interface defining retry configuration behavior.
  * 
  * @since 1.0.2
  */
-public class RetryConfig {
-    private int maxRetries;
-    private long retryDelayMillis;
-    private Duration connectionTimeout;
+public interface RetryConfig {
+    int getMaxRetries();
 
-    /**
-     * Creates a default configuration.
-     */
-    public RetryConfig() {
-        this(3, 1000); // Default: 3 retries with 1 second delay
-    }
+    long getRetryDelayMillis();
 
-    /**
-     * Creates a retry configuration with specified parameters.
-     *
-     * @param maxRetries Number of retries
-     * @param delay      Delay duration
-     * @param unit       Time unit for delay
-     */
-    public RetryConfig(int maxRetries, long delay, TimeUnit unit) {
-        this(maxRetries, unit.toMillis(delay));
-    }
+    Duration getConnectionTimeout();
 
-    /**
-     * Creates a retry configuration with specified parameters.
-     *
-     * @param maxRetries       Number of retries
-     * @param retryDelayMillis Delay in milliseconds
-     */
-    public RetryConfig(int maxRetries, long retryDelayMillis) {
-        this.connectionTimeout = Duration.ofSeconds(30); // Default timeout
-        update(maxRetries, retryDelayMillis);
-    }
+    void setConnectionTimeout(Duration timeout);
 
-    /**
-     * Updates retry configuration.
-     *
-     * @param maxRetries       Number of retries
-     * @param retryDelayMillis Delay in milliseconds
-     */
-    public void update(int maxRetries, long retryDelayMillis) {
-        validateParams(maxRetries, retryDelayMillis);
-        this.maxRetries = maxRetries;
-        this.retryDelayMillis = retryDelayMillis;
-    }
-
-    public void setConnectionTimeout(Duration timeout) {
-        if (timeout == null || timeout.isNegative()) {
-            throw new IllegalArgumentException("Invalid timeout value");
-        }
-        this.connectionTimeout = timeout;
-    }
-
-    private void validateParams(int maxRetries, long retryDelayMillis) {
-        if (maxRetries < 0) {
-            throw new IllegalArgumentException("Max retries cannot be negative");
-        }
-        if (retryDelayMillis < 0) {
-            throw new IllegalArgumentException("Retry delay cannot be negative");
-        }
-    }
-
-    public int getMaxRetries() {
-        return maxRetries;
-    }
-
-    public long getRetryDelayMillis() {
-        return retryDelayMillis;
-    }
-
-    public Duration getConnectionTimeout() {
-        return connectionTimeout;
-    }
+    void update(int maxRetries, long retryDelayMillis);
 }

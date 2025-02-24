@@ -4,7 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
 import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
-import io.github.scorpio4938.LLMCall.config.RetryConfig;
+import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
@@ -161,7 +161,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainFallback() throws Exception {
-        RetryConfig retryConfig = new RetryConfig(1, 50, TimeUnit.MILLISECONDS);
+        DefaultRetry retryConfig = new DefaultRetry(1, 50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data)
@@ -212,7 +212,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testRetrySuccessAfterTwoFailures() throws Exception {
-        RetryConfig retryConfig = new RetryConfig(3, 100, TimeUnit.MILLISECONDS);
+        DefaultRetry retryConfig = new DefaultRetry(3, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.directCallLLM(new LLMRequestBuilder("retry-model")
@@ -224,7 +224,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testAllRetriesFail() {
-        RetryConfig retryConfig = new RetryConfig(1, 100, TimeUnit.MILLISECONDS);
+        DefaultRetry retryConfig = new DefaultRetry(1, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         assertThrows(Exception.class, () -> {
@@ -245,7 +245,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainWithPrompt() throws Exception {
-        RetryConfig retryConfig = new RetryConfig(1, 50, TimeUnit.MILLISECONDS);
+        DefaultRetry retryConfig = new DefaultRetry(1, 50, TimeUnit.MILLISECONDS);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
         String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data)

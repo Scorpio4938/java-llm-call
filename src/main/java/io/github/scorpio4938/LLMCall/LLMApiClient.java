@@ -13,7 +13,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
-import io.github.scorpio4938.LLMCall.config.RetryConfig;
+import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
