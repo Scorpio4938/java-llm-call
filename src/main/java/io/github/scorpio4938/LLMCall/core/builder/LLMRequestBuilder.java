@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
+import io.github.scorpio4938.LLMCall.config.RetryConfig;
 
 /**
  * Builder class for constructing LLM request configurations.
@@ -31,6 +32,7 @@ public class LLMRequestBuilder {
     private Map<String, String> data;
     private final Map<String, Object> params = new HashMap<>();
     private Prompt prompt;
+    private RetryConfig retryConfig = new RetryConfig(); // Default retry config
 
     public LLMRequestBuilder(String model) {
         Objects.requireNonNull(model, "Model cannot be null");
@@ -90,6 +92,21 @@ public class LLMRequestBuilder {
     public LLMRequestBuilder withFallback(String... fallbackModels) {
         models.addAll(Arrays.asList(fallbackModels));
         return this;
+    }
+
+    /**
+     * Set custom retry configuration
+     */
+    public LLMRequestBuilder withRetryConfig(RetryConfig retryConfig) {
+        this.retryConfig = Objects.requireNonNull(retryConfig, "RetryConfig cannot be null");
+        return this;
+    }
+
+    /**
+     * Get current retry configuration
+     */
+    public RetryConfig getRetryConfig() {
+        return retryConfig;
     }
 
     public String getModel() {

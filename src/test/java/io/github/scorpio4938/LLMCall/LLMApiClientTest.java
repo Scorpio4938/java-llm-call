@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
 import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
+import io.github.scorpio4938.LLMCall.config.RetryConfig;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
@@ -160,7 +161,7 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainFallback() throws Exception {
-        client.updateRetryConfig(1, 50, TimeUnit.MILLISECONDS);
+        RetryConfig retryConfig = new RetryConfig(1, 50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data)
@@ -211,23 +212,27 @@ public class LLMApiClientTest {
 
     @Test
     public void testRetrySuccessAfterTwoFailures() throws Exception {
-        client.updateRetryConfig(3, 100, TimeUnit.MILLISECONDS);
+        RetryConfig retryConfig = new RetryConfig(3, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.directCallLLM(new LLMRequestBuilder("retry-model").withData(data));
+        String result = client.directCallLLM(new LLMRequestBuilder("retry-model")
+                .withData(data)
+                .withRetryConfig(retryConfig));
         assertEquals("Hello!", result);
         assertEquals(3, retryCounter.get(), "Should make 3 attempts");
     }
 
     @Test
     public void testAllRetriesFail() {
-        client.updateRetryConfig(2, 100, TimeUnit.MILLISECONDS);
+        RetryConfig retryConfig = new RetryConfig(1, 100, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         assertThrows(Exception.class, () -> {
-            client.directCallLLM(new LLMRequestBuilder("always-fail-model").withData(data));
+            client.directCallLLM(new LLMRequestBuilder("always-fail-model")
+                    .withData(data)
+                    .withRetryConfig(retryConfig));
         });
-        assertEquals(3, alwaysFailCounter.get(), "Should make 3 attempts (initial + 2 retries)");
+        assertEquals(2, alwaysFailCounter.get(), "Should make 2 attempts (initial + 1 retry)");
     }
 
     @Test
@@ -240,11 +245,12 @@ public class LLMApiClientTest {
 
     @Test
     public void testModelChainWithPrompt() throws Exception {
-        client.updateRetryConfig(1, 50, TimeUnit.MILLISECONDS);
+        RetryConfig retryConfig = new RetryConfig(1, 50, TimeUnit.MILLISECONDS);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
         String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data)
-                .withPrompt(new BasicPrompt()));
+                .withPrompt(new BasicPrompt())
+                .withRetryConfig(retryConfig));
         assertEquals("Hello!", result);
     }
 }

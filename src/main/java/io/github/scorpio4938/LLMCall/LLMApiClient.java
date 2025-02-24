@@ -39,7 +39,6 @@ public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
 
     private final RequestHandler requestHandler;
-    private final RetryConfig config;
 
     /**
      * Constructs a new LLMApiClient with the specified provider.
@@ -50,22 +49,9 @@ public class LLMApiClient {
      * @since 1.0.0
      */
     public LLMApiClient(Provider provider) {
-        this(provider, new RetryConfig());
-    }
-
-    /**
-     * Constructs a new LLMApiClient with custom HttpClient configuration.
-     *
-     * @param provider The LLM provider to use (must not be null)
-     * @param config   Custom client configuration (must not be null)
-     * @throws IllegalArgumentException if provider or config is null
-     */
-    public LLMApiClient(Provider provider, RetryConfig config) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(config.getConnectionTimeout())
-                .build();
-        this.requestHandler = new RequestHandler(provider, httpClient);
-        this.config = config;
+        this(provider, HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .build());
     }
 
     /**
@@ -76,20 +62,7 @@ public class LLMApiClient {
      * @throws IllegalArgumentException if provider or httpClient is null
      */
     public LLMApiClient(Provider provider, HttpClient httpClient) {
-        this(provider, httpClient, new RetryConfig());
-    }
-
-    /**
-     * Constructs a new LLMApiClient with custom HttpClient configuration.
-     *
-     * @param provider   The LLM provider to use (must not be null)
-     * @param httpClient Custom HttpClient instance (must not be null)
-     * @param config     Custom client configuration (must not be null)
-     * @throws IllegalArgumentException if provider, httpClient, or config is null
-     */
-    public LLMApiClient(Provider provider, HttpClient httpClient, RetryConfig config) {
         this.requestHandler = new RequestHandler(provider, httpClient);
-        this.config = config;
     }
 
     /**
@@ -103,7 +76,7 @@ public class LLMApiClient {
      */
     public String directCallLLM(LLMRequestBuilder builder) throws Exception {
         String requestBody = requestHandler.buildRequest(builder);
-        String responseBody = requestHandler.sendRequestWithRetry(requestBody, config);
+        String responseBody = requestHandler.sendRequestWithRetry(requestBody, builder);
         return parseResponse(responseBody);
     }
 
@@ -150,13 +123,5 @@ public class LLMApiClient {
                 throw new CompletionException(e);
             }
         });
-    }
-
-    public void updateRetryConfig(int maxRetries, long delay, TimeUnit unit) {
-        config.update(maxRetries, unit.toMillis(delay));
-    }
-
-    public void setConnectionTimeout(Duration timeout) {
-        config.setConnectionTimeout(timeout);
     }
 }

@@ -91,34 +91,19 @@ public class RequestHandler {
      */
     public String send(String requestBody) throws Exception {
         HttpResponse<String> response = client.send(
-                buildHttpRequest(requestBody),
+                buildHttpRequest(requestBody, Duration.ofSeconds(30)),
                 HttpResponse.BodyHandlers.ofString());
         validateResponse(response);
         return response.body();
     }
 
-    private HttpRequest buildHttpRequest(String requestBody) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(provider.getUrl()))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + provider.getKey())
-                .timeout(Duration.ofSeconds(30))
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-    }
-
     /**
-     * Sends the request to the LLM provider with retry
-     * 
-     * @param requestBody The request body
-     * @param retryConfig The retry configuration
-     * @return The response body
-     * 
-     * @since 1.0.2
+     * Sends the request with retry based on builder configuration
      */
-    public String sendRequestWithRetry(String requestBody, RetryConfig retryConfig)
+    public String sendRequestWithRetry(String requestBody, LLMRequestBuilder builder)
             throws Exception {
-        HttpRequest request = buildHttpRequest(requestBody);
+        RetryConfig retryConfig = builder.getRetryConfig();
+        HttpRequest request = buildHttpRequest(requestBody, retryConfig.getConnectionTimeout());
         Exception lastError = null;
 
         for (int attempt = 1; attempt <= retryConfig.getMaxRetries() + 1; attempt++) {
@@ -137,6 +122,16 @@ public class RequestHandler {
             }
         }
         throw lastError;
+    }
+
+    private HttpRequest buildHttpRequest(String requestBody, Duration timeout) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(provider.getUrl()))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + provider.getKey())
+                .timeout(timeout)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
     }
 
     private boolean shouldRetryRequest(Exception e, int attempt, int maxRetries) {

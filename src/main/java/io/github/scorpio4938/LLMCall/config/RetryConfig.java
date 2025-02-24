@@ -24,8 +24,8 @@ public class RetryConfig {
      * Creates a retry configuration with specified parameters.
      *
      * @param maxRetries Number of retries
-     * @param delay Delay duration
-     * @param unit Time unit for delay
+     * @param delay      Delay duration
+     * @param unit       Time unit for delay
      */
     public RetryConfig(int maxRetries, long delay, TimeUnit unit) {
         this(maxRetries, unit.toMillis(delay));
@@ -34,7 +34,7 @@ public class RetryConfig {
     /**
      * Creates a retry configuration with specified parameters.
      *
-     * @param maxRetries Number of retries
+     * @param maxRetries       Number of retries
      * @param retryDelayMillis Delay in milliseconds
      */
     public RetryConfig(int maxRetries, long retryDelayMillis) {
@@ -45,7 +45,7 @@ public class RetryConfig {
     /**
      * Updates retry configuration.
      *
-     * @param maxRetries Number of retries
+     * @param maxRetries       Number of retries
      * @param retryDelayMillis Delay in milliseconds
      */
     public void update(int maxRetries, long retryDelayMillis) {
@@ -81,4 +81,4 @@ public class RetryConfig {
     public Duration getConnectionTimeout() {
         return connectionTimeout;
     }
-} 
+}
