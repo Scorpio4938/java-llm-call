@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 
 /**
  * Builder class for constructing LLM request configurations.
@@ -13,22 +17,24 @@ import java.util.Collections;
  * Example usage:
  * 
  * <pre>{@code
- * LLMRequestConfig config = LLMRequestConfig.newBuilder("gpt-4")
+ * LLMRequestBuilder builder = new LLMRequestBuilder("gpt-4")
  *         .withData(messageMap)
- *         .withParams(params)
+ *         .withMaxTokens(100)
  *         .withPrompt(new BasicPrompt())
+ *         .withTemperature(0.7);
  * }</pre>
  * 
  * @since 1.0.2
  */
 public class LLMRequestBuilder {
-    private final String model;
+    private final List<String> models = new ArrayList<>();
     private Map<String, String> data;
     private final Map<String, Object> params = new HashMap<>();
     private Prompt prompt;
 
     public LLMRequestBuilder(String model) {
-        this.model = Objects.requireNonNull(model, "Model cannot be null");
+        Objects.requireNonNull(model, "Model cannot be null");
+        models.add(model);
         this.data = Map.of();
     }
 
@@ -78,9 +84,20 @@ public class LLMRequestBuilder {
         return this;
     }
 
-    // Getters
+    /**
+     * Add fallback models to try if the primary model fails
+     */
+    public LLMRequestBuilder withFallback(String... fallbackModels) {
+        models.addAll(Arrays.asList(fallbackModels));
+        return this;
+    }
+
     public String getModel() {
-        return model;
+        return models.get(0);
+    }
+
+    public List<String> getModels() {
+        return Collections.unmodifiableList(models);
     }
 
     public Map<String, String> getData() {
@@ -96,9 +113,12 @@ public class LLMRequestBuilder {
     }
 
     public LLMRequestBuilder cloneWithModel(String newModel) {
-        return new LLMRequestBuilder(newModel)
+        LLMRequestBuilder clone = new LLMRequestBuilder(newModel)
                 .withData(this.data)
                 .withParams(this.params)
                 .withPrompt(this.prompt);
+        // Skip first model since we already set it in constructor
+        models.stream().skip(1).forEach(m -> clone.withFallback(m));
+        return clone;
     }
 }

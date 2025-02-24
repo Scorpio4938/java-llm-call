@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
-    
+
     private final RequestHandler requestHandler;
     private final RetryConfig config;
 
@@ -56,8 +56,8 @@ public class LLMApiClient {
     /**
      * Constructs a new LLMApiClient with custom HttpClient configuration.
      *
-     * @param provider   The LLM provider to use (must not be null)
-     * @param config     Custom client configuration (must not be null)
+     * @param provider The LLM provider to use (must not be null)
+     * @param config   Custom client configuration (must not be null)
      * @throws IllegalArgumentException if provider or config is null
      */
     public LLMApiClient(Provider provider, RetryConfig config) {
@@ -113,17 +113,24 @@ public class LLMApiClient {
     }
 
     /**
-     * Calls the LLM with the given model and message map using default
-     * parameters.
-     *
-     * @param model The model to use
-     * @param data  The message data
-     * @return The content of the first message in the response
-     * 
-     * @since 1.0.0
+     * Calls the LLM with fallback support
      */
-    public ModelChain callLLM(LLMRequestBuilder builder) {
-        return new ModelChain(builder);
+    public String callLLM(LLMRequestBuilder builder) throws Exception {
+        Exception lastError = null;
+        StringBuilder errors = new StringBuilder();
+
+        for (String model : builder.getModels()) {
+            try {
+                return directCallLLM(builder.cloneWithModel(model));
+            } catch (Exception e) {
+                String errorMsg = "Model " + model + " failed: " + e.getMessage();
+                errors.append(errorMsg).append("\n");
+                Debugger.log(errorMsg);
+                lastError = e;
+            }
+        }
+
+        throw new Exception("All models failed. Errors:\n" + errors, lastError);
     }
 
     /**
@@ -151,41 +158,5 @@ public class LLMApiClient {
 
     public void setConnectionTimeout(Duration timeout) {
         config.setConnectionTimeout(timeout);
-    }
-
-    public class ModelChain {
-        private final LLMRequestBuilder builder;
-        private final List<String> fallbackModels = new ArrayList<>();
-
-        public ModelChain(LLMRequestBuilder builder) {
-            this.builder = builder;
-        }
-
-        public ModelChain withFallback(String... models) {
-            fallbackModels.addAll(Arrays.asList(models));
-            return this;
-        }
-
-        public String execute() throws Exception {
-            List<String> allModels = new ArrayList<>();
-            allModels.add(builder.getModel());
-            allModels.addAll(fallbackModels);
-
-            Exception lastError = null;
-            StringBuilder errors = new StringBuilder();
-
-            for (String model : allModels) {
-                try {
-                    return directCallLLM(builder.cloneWithModel(model));
-                } catch (Exception e) {
-                    String errorMsg = "Model " + model + " failed: " + e.getMessage();
-                    errors.append(errorMsg).append("\n");
-                    Debugger.log(errorMsg);
-                    lastError = e;
-                }
-            }
-            
-            throw new Exception("All models failed. Errors:\n" + errors, lastError);
-        }
     }
 }

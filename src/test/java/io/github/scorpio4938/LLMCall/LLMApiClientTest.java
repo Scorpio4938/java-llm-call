@@ -163,9 +163,8 @@ public class LLMApiClientTest {
         client.updateRetryConfig(1, 50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data))
-                .withFallback("good-model")
-                .execute();
+        String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data)
+                .withFallback("good-model"));
 
         assertEquals("Hello!", result);
     }
@@ -245,8 +244,7 @@ public class LLMApiClientTest {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
         String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data)
-                .withPrompt(new BasicPrompt()))
-                .execute();
+                .withPrompt(new BasicPrompt()));
         assertEquals("Hello!", result);
     }
 }
