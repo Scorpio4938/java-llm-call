@@ -86,15 +86,28 @@ public class LLMApiClient {
     }
 
     /**
-     * Calls the LLM with fallback support
+     * Calls the LLM with fallback support. Tries each model in sequence until one succeeds.
+     * 
+     * @param builder The request builder containing models and configuration
+     * @return The content of the first message in the response
+     * @throws Exception if all models fail
+     * 
+     * @since 1.0.2
      */
     public String callLLM(LLMRequestBuilder builder) throws Exception {
         Exception lastError = null;
         StringBuilder errors = new StringBuilder();
-
-        for (String model : builder.getModels()) {
+        List<String> models = builder.getModels();
+        
+        Debugger.log("Attempting call with " + models.size() + " model(s): " + String.join(", ", models));
+        
+        for (int i = 0; i < models.size(); i++) {
+            String model = models.get(i);
             try {
-                return directCallLLM(builder.cloneWithModel(model));
+                Debugger.log("Trying model " + model + " (" + (i+1) + "/" + models.size() + ")");
+                String result = directCallLLM(builder.cloneWithModel(model));
+                Debugger.log("Model " + model + " succeeded");
+                return result;
             } catch (Exception e) {
                 String errorMsg = "Model " + model + " failed: " + e.getMessage();
                 errors.append(errorMsg).append("\n");

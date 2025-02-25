@@ -12,6 +12,7 @@ public class DefaultRetry implements RetryConfig {
     private int maxRetries;
     private long retryDelayMillis;
     private Duration connectionTimeout;
+    private BackoffStrategy backoffStrategy = null;
 
     /**
      * Creates a default configuration.
@@ -80,5 +81,70 @@ public class DefaultRetry implements RetryConfig {
 
     public Duration getConnectionTimeout() {
         return connectionTimeout;
+    }
+
+    /**
+     * Creates a retry configuration with exponential backoff.
+     *
+     * @param maxRetries Number of retries
+     * @param initialDelayMillis Initial delay in milliseconds
+     * @param backoffFactor Factor to multiply delay by after each attempt
+     * @return A new retry configuration with exponential backoff
+     */
+    public static DefaultRetry withExponentialBackoff(int maxRetries, long initialDelayMillis, double backoffFactor) {
+        if (backoffFactor <= 1.0) {
+            throw new IllegalArgumentException("Backoff factor must be greater than 1.0");
+        }
+        
+        DefaultRetry config = new DefaultRetry(maxRetries, initialDelayMillis);
+        config.setBackoffStrategy(new ExponentialBackoffStrategy(initialDelayMillis, backoffFactor));
+        return config;
+    }
+
+    /**
+     * Sets the backoff strategy for retries
+     * 
+     * @param strategy The strategy to use for calculating retry delays
+     */
+    public void setBackoffStrategy(BackoffStrategy strategy) {
+        this.backoffStrategy = strategy;
+    }
+
+    /**
+     * Gets the delay for a specific retry attempt
+     * 
+     * @param attempt The current attempt number (1-based)
+     * @return The delay in milliseconds
+     */
+    public long getDelayForAttempt(int attempt) {
+        if (backoffStrategy == null) {
+            return retryDelayMillis;
+        }
+        return backoffStrategy.getDelayMillis(attempt);
+    }
+
+    /**
+     * Interface for retry backoff strategies
+     */
+    public interface BackoffStrategy {
+        long getDelayMillis(int attempt);
+    }
+
+    /**
+     * Implements exponential backoff for retries
+     */
+    public static class ExponentialBackoffStrategy implements BackoffStrategy {
+        private final long initialDelayMillis;
+        private final double factor;
+        
+        public ExponentialBackoffStrategy(long initialDelayMillis, double factor) {
+            this.initialDelayMillis = initialDelayMillis;
+            this.factor = factor;
+        }
+        
+        @Override
+        public long getDelayMillis(int attempt) {
+            return (long)(initialDelayMillis * Math.pow(factor, attempt - 1));
+        }
     }
 }

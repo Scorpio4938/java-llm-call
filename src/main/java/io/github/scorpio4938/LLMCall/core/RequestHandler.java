@@ -13,6 +13,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
+import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -99,6 +100,13 @@ public class RequestHandler {
 
     /**
      * Sends the request with retry based on builder configuration
+     * 
+     * @param requestBody The request body
+     * @param builder The request builder containing retry configuration
+     * @return The response body as a string
+     * @throws Exception if all retry attempts fail
+     * 
+     * @since 1.0.2
      */
     public String sendRequestWithRetry(String requestBody, LLMRequestBuilder builder)
             throws Exception {
@@ -107,17 +115,29 @@ public class RequestHandler {
         Exception lastError = null;
 
         for (int attempt = 1; attempt <= retryConfig.getMaxRetries() + 1; attempt++) {
+            boolean isLastAttempt = attempt > retryConfig.getMaxRetries();
             try {
                 Debugger.log("Attempt %d/%d to: %s".formatted(
                         attempt, retryConfig.getMaxRetries() + 1, provider.getUrl()));
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 validateResponse(response);
+                Debugger.log("Request succeeded on attempt " + attempt);
                 return response.body();
             } catch (Exception e) {
                 lastError = e;
-                if (shouldRetryRequest(e, attempt, retryConfig.getMaxRetries())) {
-                    Debugger.log("Retrying in %dms...".formatted(retryConfig.getRetryDelayMillis()));
-                    Thread.sleep(retryConfig.getRetryDelayMillis());
+                if (isLastAttempt) {
+                    Debugger.log("Final attempt failed: " + e.getMessage());
+                    break;
+                }
+                
+                if (shouldRetry(e)) {
+                    long delayMillis = retryConfig.getDelayForAttempt(attempt);
+                    Debugger.log("Attempt %d failed: %s. Retrying in %dms...".formatted(
+                            attempt, e.getMessage(), delayMillis));
+                    Thread.sleep(delayMillis);
+                } else {
+                    Debugger.log("Non-retryable error: " + e.getMessage());
+                    break;
                 }
             }
         }
@@ -134,24 +154,40 @@ public class RequestHandler {
                 .build();
     }
 
-    private boolean shouldRetryRequest(Exception e, int attempt, int maxRetries) {
-        return attempt <= maxRetries && shouldRetry(e);
+    /**
+     * Gets the type of error from an exception
+     * 
+     * @param e The exception
+     * @return The error type
+     */
+    private RetryableErrorType getErrorType(Exception e) {
+        if (e instanceof LLMResponseException) {
+            int statusCode = ((LLMResponseException) e).getStatusCode();
+            if (statusCode == 429) {
+                return RetryableErrorType.RATE_LIMIT;
+            } else if (statusCode >= 500 && statusCode < 600) {
+                return RetryableErrorType.SERVER_ERROR;
+            }
+        } else if (e instanceof java.io.IOException) {
+            return RetryableErrorType.NETWORK_ERROR;
+        } else if (e instanceof java.util.concurrent.TimeoutException) {
+            return RetryableErrorType.TIMEOUT;
+        }
+        return RetryableErrorType.OTHER;
     }
 
     /**
-     * Determines if the request should be retried
+     * Determines if the request should be retried based on the exception type
      * 
-     * @param e The exception
+     * @param e The exception that occurred
      * @return True if the request should be retried, false otherwise
      * 
      * @since 1.0.2
      */
     private boolean shouldRetry(Exception e) {
-        if (e instanceof LLMResponseException) {
-            int statusCode = ((LLMResponseException) e).getStatusCode();
-            return statusCode == 429 || (statusCode >= 500 && statusCode < 600);
-        }
-        return e instanceof java.io.IOException;
+        RetryableErrorType errorType = getErrorType(e);
+        Debugger.log("Error type: " + errorType);
+        return errorType.isRetryable();
     }
 
     private void validateResponse(HttpResponse<String> response) {
