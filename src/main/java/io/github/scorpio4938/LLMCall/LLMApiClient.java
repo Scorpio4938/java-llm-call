@@ -10,7 +10,7 @@ import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
-import io.github.scorpio4938.LLMCall.core.providers.Provider;
+import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 import io.github.scorpio4938.LLMCall.config.DefaultRetry;
@@ -48,7 +48,7 @@ public class LLMApiClient {
      * 
      * @since 1.0.0
      */
-    public LLMApiClient(Provider provider) {
+    public LLMApiClient(IProvider provider) {
         this(provider, HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build());
@@ -61,7 +61,7 @@ public class LLMApiClient {
      * @param httpClient Custom HttpClient instance (must not be null)
      * @throws IllegalArgumentException if provider or httpClient is null
      */
-    public LLMApiClient(Provider provider, HttpClient httpClient) {
+    public LLMApiClient(IProvider provider, HttpClient httpClient) {
         this.requestHandler = new RequestHandler(provider, httpClient);
     }
 

@@ -2,7 +2,7 @@ package io.github.scorpio4938.LLMCall.core.providers;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.scorpio4938.LLMCall.core.providers.Provider;
+import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.core.providers.ProviderNotSupportedException;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
 
@@ -14,7 +14,7 @@ class ProvidersTest {
     @Test
     void shouldContainDefaultProviders() {
         Providers providers = new Providers();
-        List<Provider> providerList = providers.getProviders();
+        List<IProvider> providerList = providers.getProviders();
 
         assertFalse(providerList.isEmpty(), "Providers list should not be empty");
         assertTrue(providerList.size() >= 4, "Should contain at least 4 default providers");
@@ -24,12 +24,12 @@ class ProvidersTest {
     void shouldRetrieveProviderByName() {
         Providers providers = new Providers();
 
-        Provider ollama = providers.getProvider("OLLAMA");
+        IProvider ollama = providers.getProvider("OLLAMA");
         assertNotNull(ollama, "OLLAMA provider should exist");
         assertEquals("http://localhost:11434/v1/chat/completions", ollama.getUrl());
         assertNull(ollama.getKey(), "OLLAMA key should be null");
 
-        Provider deepseek = providers.getProvider("DEEPSEEK");
+        IProvider deepseek = providers.getProvider("DEEPSEEK");
         assertNotNull(deepseek, "DEEPSEEK provider should exist");
         assertEquals("https://api.deepseek.com", deepseek.getUrl());
     }
@@ -48,7 +48,7 @@ class ProvidersTest {
     @Test
     void shouldContainCorrectModelsForOllama() {
         Providers providers = new Providers();
-        Provider ollama = providers.getProvider("OLLAMA");
+        IProvider ollama = providers.getProvider("OLLAMA");
 
         List<String> models = ollama.getModels();
         assertTrue(models.contains("deepseek-r1:1.5b"));
@@ -68,7 +68,7 @@ class ProvidersTest {
                 "CUSTOM_KEY",
                 List.of("custom-model"));
 
-        Provider customProvider = providers.getProvider(customProviderName);
+        IProvider customProvider = providers.getProvider(customProviderName);
         assertEquals(customProviderName, customProvider.getProvider());
         assertEquals("http://custom-llm.com", customProvider.getUrl());
         // assertEquals("test_custom_key_value", customProvider.getKey());
@@ -85,7 +85,7 @@ class ProvidersTest {
                 "CUSTOM_V1_KEY",
                 List.of("v1-model"));
 
-        Provider customProvider = providers.getProvider(customProviderName);
+        IProvider customProvider = providers.getProvider(customProviderName);
         assertEquals(customProviderName, customProvider.getProvider());
         assertEquals("http://custom-v1.com/v1/chat/completions", customProvider.getUrl());
         // assertEquals("test_custom_key_value", customProvider.getKey());
@@ -102,7 +102,7 @@ class ProvidersTest {
                 "NEW_OLLAMA_KEY",
                 List.of("new-model"));
 
-        Provider ollama = providers.getProvider("OLLAMA");
+        IProvider ollama = providers.getProvider("OLLAMA");
         assertEquals("OLLAMA", ollama.getProvider());
         assertEquals("http://new-ollama-url.com", ollama.getUrl());
         // assertEquals("test_new_key_value", ollama.getKey());
@@ -114,7 +114,7 @@ class ProvidersTest {
         Providers providers = new Providers();
         providers.setProvider("TEST", "http://test.com", "TEST_KEY", List.of("test-model"));
 
-        Provider p = providers.getProvider("TEST");
+        IProvider p = providers.getProvider("TEST");
         assertEquals("http://test.com", p.getUrl());
         assertTrue(p.getModels().contains("test-model"));
     }
@@ -124,7 +124,7 @@ class ProvidersTest {
         Providers providers = new Providers();
         providers.setProviderWithV1("TEST_V1", "http://test.com", "TEST_KEY", List.of("test-model"));
 
-        Provider p = providers.getProvider("TEST_V1");
+        IProvider p = providers.getProvider("TEST_V1");
         assertEquals("http://test.com/v1/chat/completions", p.getUrl());
         assertTrue(p.getModels().contains("test-model"));
     }

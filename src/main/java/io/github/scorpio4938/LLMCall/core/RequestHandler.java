@@ -10,7 +10,7 @@ import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
-import io.github.scorpio4938.LLMCall.core.providers.Provider;
+import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 
@@ -32,10 +32,10 @@ import java.util.Objects;
 public class RequestHandler {
     private static final Gson GSON = new GsonBuilder().create();
 
-    private final Provider provider;
+    private final IProvider provider;
     private final HttpClient client;
 
-    public RequestHandler(Provider provider, HttpClient client) {
+    public RequestHandler(IProvider provider, HttpClient client) {
         this.provider = Objects.requireNonNull(provider);
         this.client = Objects.requireNonNull(client);
     }

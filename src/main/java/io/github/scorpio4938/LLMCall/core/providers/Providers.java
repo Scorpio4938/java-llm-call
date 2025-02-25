@@ -9,7 +9,7 @@ import java.util.*;
  *
  */
 public class Providers {
-    private List<Provider> providers = new ArrayList<>();
+    private List<IProvider> providers = new ArrayList<>();
 
     public Providers() {
         this.config();
@@ -101,12 +101,12 @@ public class Providers {
      *
      * @param provider The name of the provider.
      * @return The provider object.
-     * @throws IllegalArgumentException If the provider is not supported.
+     * @throws ProviderNotSupportedException If the provider is not supported.
      * 
      * @since 1.0.0
      */
-    public Provider getProvider(String provider) {
-        for (Provider provider1 : providers) {
+    public IProvider getProvider(String provider) {
+        for (IProvider provider1 : providers) {
             if (provider1.getProvider().equals(provider)) {
                 return provider1;
             }
@@ -121,7 +121,7 @@ public class Providers {
      * 
      * @since 1.0.0
      */
-    public List<Provider> getProviders() {
+    public List<IProvider> getProviders() {
         return this.providers;
     }
 

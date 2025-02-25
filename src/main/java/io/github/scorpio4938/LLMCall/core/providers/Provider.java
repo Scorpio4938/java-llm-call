@@ -6,7 +6,7 @@ import java.util.List;
  * Interface class for llm providers.
  *
  */
-public class Provider {
+public class Provider implements IProvider {
     private String provider;
     private String url;
     private String key;
@@ -19,23 +19,27 @@ public class Provider {
         this.models = models;
     }
 
-    // Getters
+    @Override
     public String getProvider() {
         return provider;
     }
 
+    @Override
     public String getUrl() {
         return url;
     }
 
+    @Override
     public String getKey() {
         return key;
     }
 
+    @Override
     public List<String> getModels() {
         return models;
     }
 
+    @Override
     public String getModel(String modelName) {
         for (String model : models) {
             if (model.equals(modelName)) {
