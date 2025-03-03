@@ -14,6 +14,7 @@ import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 import io.github.scorpio4938.LLMCall.config.DefaultRetry;
+import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
@@ -94,8 +95,8 @@ public class LLMApiClient {
      * 
      * @since 1.0.2
      */
-    public String callLLM(LLMRequestBuilder builder) throws Exception {
-        Exception lastError = null;
+    public String callLLM(LLMRequestBuilder builder) throws LLMException {
+        LLMException lastError = null;
         StringBuilder errors = new StringBuilder();
         List<String> models = builder.getModels();
         
@@ -112,11 +113,12 @@ public class LLMApiClient {
                 String errorMsg = "Model " + model + " failed: " + e.getMessage();
                 errors.append(errorMsg).append("\n");
                 Debugger.log(errorMsg);
-                lastError = e;
+                lastError = e instanceof LLMException ? (LLMException) e 
+                    : new LLMException("Unexpected error", e);
             }
         }
 
-        throw new Exception("All models failed. Errors:\n" + errors, lastError);
+        throw new LLMException("All models failed. Errors:\n" + errors.toString(), lastError);
     }
 
     /**
@@ -133,7 +135,8 @@ public class LLMApiClient {
             try {
                 return directCallLLM(builder);
             } catch (Exception e) {
-                throw new CompletionException(e);
+                throw e instanceof LLMException ? (LLMException) e 
+                    : new LLMException("Async call failed", e);
             }
         });
     }

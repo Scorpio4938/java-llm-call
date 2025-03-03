@@ -1,34 +1,29 @@
 package io.github.scorpio4938.LLMCall.core.messages;
 
+import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
 import java.net.http.HttpResponse;
 
-public class LLMResponseException extends RuntimeException {
-    private HttpResponse<String> response;
-    private int statusCode;
-    private String responseBody;
+public class LLMResponseException extends LLMException {
+    private final HttpResponse<String> response;
+    private final int statusCode;
+    private final String responseBody;
 
     public LLMResponseException(String message, int statusCode) {
-        super(message);
+        super(formatMessage(message, statusCode));
         this.statusCode = statusCode;
-    }
-
-    public LLMResponseException(String message, HttpResponse<String> response) {
-        super(message);
-        this.response = response;
-        this.statusCode = response.statusCode();
-        this.responseBody = response.body();
-    }
-
-    public LLMResponseException(int statusCode) {
-        super("LLM Request Failed with status code: " + statusCode);
-        this.statusCode = statusCode;
+        this.response = null;
+        this.responseBody = null;
     }
 
     public LLMResponseException(HttpResponse<String> response) {
-        super("LLM Request Failed with status code: " + response.statusCode());
+        super(formatMessage("LLM Request Failed", response.statusCode()));
         this.response = response;
         this.responseBody = response.body();
         this.statusCode = response.statusCode();
+    }
+
+    private static String formatMessage(String message, int statusCode) {
+        return String.format("%s (Status: %d)", message, statusCode);
     }
 
     public HttpResponse<String> getResponse() {
