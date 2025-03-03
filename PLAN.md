@@ -1,74 +1,108 @@
 # Improvement Plan for Java LLM Call Library
 
-## Code Structure
+This is for the version 1.0.2
 
-1. Fix incomplete code blocks in classes:
-   - Complete missing brackets in LLMRequestBuilder
-   - Add missing closing methods in DefaultRetry
-   - Fix incomplete getModel() method in LLMResponse
+## Core Structural Improvements (High Priority)
+1. Fix interface-implementation alignment:
+   - Convert `Provider` to interface (current implementation is concrete class)
+   - Make `DefaultRetry` fully implement `RetryConfig` interface
+   - Ensure all interface methods have proper Javadocs
 
-2. Align interfaces and implementations:
-   - Make Provider an actual interface with implementation classes
-   - Ensure RetryConfig interface is properly implemented
+2. Simplify builder patterns:
+   - Consolidate `LLMRequestBuilder` and `LLMRequestConfig` responsibilities
+   - Remove redundant parameter validation in builder methods
+   - Add null-safe method chaining
 
-3. Standardize package organization:
-   - Group related classes consistently
-   - Move utility classes to appropriate packages
+3. Error handling unification:
+   - Create base `LLMException` with error code enum
+   - Deprecate `NotSupportException` in favor of standard exceptions
+   - Add global exception handler configuration
 
-## Simplify API Design
+## API Surface Improvements
+1. Streamline client entry points:
+   - Create fluent factory methods for `LLMApiClient`
+   - Add provider registry pattern for easier configuration
+   - Simplify async call handling with CompletableFuture wrappers
 
-1. Streamline builder pattern:
-   - Reduce parameter overloading
-   - Make chaining more intuitive
-   - Add clear javadocs with simple examples
+2. Documentation enhancements (💡 New):
+   - Add `@throws` declarations to all public methods
+   - Create quickstart section in README with code examples
+   - Add Javadoc links between related classes/methods
 
-2. Create consistent error handling:
-   - Unify exception types and messages
-   - Add specific exception classes for different failure scenarios
-   - Improve error message clarity
+3. Configuration simplifications:
+   - Merge `RetryConfig` and `DefaultRetry` responsibilities
+   - Add preconfigured retry profiles (aggressive/conservative)
+   - Simplify provider configuration with environment auto-detection
 
-3. Simplify retry mechanism:
-   - Make retry logic more transparent
-   - Reduce complexity in fallback handling
-   - Add clear logging of retry attempts
+## Code Quality & Maintenance
+1. Critical fixes from original plan:
+   - Fix missing brackets in `LLMRequestBuilder` class
+   - Complete `getModel()` method in `LLMResponse`
+   - Remove commented code in POM.xml
 
-## Improve Code Quality
+2. Dependency management (💡 New):
+   - Remove unused JSON dependency (already using Gson)
+   - Consolidate exception classes under `.service.exceptions`
+   - Move provider implementations to `.providers.impl` package
 
-1. Remove redundant code:
-   - Clean up commented code sections
-   - Eliminate unnecessary validation logic
-   - Merge similar methods with different signatures
+3. Validation improvements:
+   - Create dedicated `ValidationUtils` class
+   - Replace null checks with Objects.requireNonNull()
+   - Add precondition checks for API parameters
 
-2. Enhance test coverage:
-   - Add unit tests for edge cases
-   - Improve mocking for external dependencies
-   - Test retry and fallback logic thoroughly
+## Performance & Reliability
+1. HTTP connection management:
+   - Implement connection pooling in `RequestHandler`
+   - Add keep-alive strategy for frequent calls
+   - Enable HTTP/2 support in client configuration
 
-3. Standardize method signatures:
-   - Use consistent parameter ordering
-   - Make return types predictable
-   - Follow standard Java naming conventions
+2. Memory optimization:
+   - Make builder classes immutable after build()
+   - Cache frequently used JSON structures
+   - Add object recycling for high-throughput scenarios
 
-## Documentation Enhancements
+## Testing & Validation (💡 Expanded)
+1. Add integration test suite:
+   - Mock server for provider endpoints
+   - Failure injection tests for retry logic
+   - Concurrency tests for async calls
 
-1. Add clear code examples:
-   - Provide basic usage examples
-   - Document advanced scenarios like fallbacks
-   - Add examples for all providers
+2. Improve test coverage:
+   - Edge cases for all validation methods
+   - Provider configuration error scenarios
+   - Fallback chain failure conditions
 
-2. Improve inline documentation:
-   - Complete missing javadocs
-   - Add explanatory comments for complex logic
-   - Document public API methods thoroughly
+## Documentation Additions
+1. Add usage examples:
+   ```java
+   // Basic usage
+   LLMApiClient client = LLMApiClient.create(Providers.DEEPSEEK);
+   String response = client.callLLM(new LLMRequestBuilder("deepseek-chat"));
+   
+   // Advanced usage
+   client.withRetry(RetryProfile.AGGRESSIVE)
+         .withTimeout(Duration.ofSeconds(45))
+         .asyncCall(request)
+         .thenAccept(System.out::println);
+   ```
 
-## Performance Optimizations
+2. Add architectural diagram showing component relationships
+3. Create migration guide for version upgrades
 
-1. Review request/response handling:
-   - Optimize JSON serialization/deserialization
-   - Improve HTTP client configuration
-   - Consider connection pooling for repeated calls
+## New Recommendations
+1. Consider adding optional metrics collection:
+   - Success/failure counters
+   - Latency histograms
+   - Retry statistics
 
-2. Reduce memory usage:
-   - Minimize object creation during request building
-   - Use immutable objects where appropriate
-   - Consider builder object reuse
+2. Add configuration facade:
+   ```java
+   LLMConfig.configure()
+      .withDefaultRetries(3)
+      .withConnectionPooling()
+      .registerProvidersFromEnv();
+   ```
+
+3. Introduce optional SLF4J support:
+   - Allow bridging debug logs to standard logging frameworks
+   - Add MDC context for request tracking

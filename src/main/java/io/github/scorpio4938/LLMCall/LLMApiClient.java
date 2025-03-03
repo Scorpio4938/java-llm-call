@@ -3,7 +3,6 @@ package io.github.scorpio4938.LLMCall;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
 import io.github.scorpio4938.LLMCall.core.RequestHandler;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;

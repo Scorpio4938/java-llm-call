@@ -3,7 +3,6 @@ package io.github.scorpio4938.LLMCall;
 import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
-import io.github.scorpio4938.LLMCall.config.LLMRequestConfig;
 import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
