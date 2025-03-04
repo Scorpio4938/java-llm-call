@@ -1,6 +1,8 @@
 package io.github.scorpio4938.LLMCall.core.builder;
 
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.HashMap;
@@ -9,7 +11,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 
 /**
  * Builder class for constructing LLM request configurations.

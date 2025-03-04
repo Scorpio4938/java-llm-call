@@ -3,11 +3,11 @@ package io.github.scorpio4938.LLMCall;
 import com.sun.net.httpserver.HttpServer;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

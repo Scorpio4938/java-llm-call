@@ -1,4 +1,4 @@
-package io.github.scorpio4938.LLMCall.config;
+package io.github.scorpio4938.LLMCall.core.retry;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -86,16 +86,16 @@ public class DefaultRetry implements RetryConfig {
     /**
      * Creates a retry configuration with exponential backoff.
      *
-     * @param maxRetries Number of retries
+     * @param maxRetries         Number of retries
      * @param initialDelayMillis Initial delay in milliseconds
-     * @param backoffFactor Factor to multiply delay by after each attempt
+     * @param backoffFactor      Factor to multiply delay by after each attempt
      * @return A new retry configuration with exponential backoff
      */
     public static DefaultRetry withExponentialBackoff(int maxRetries, long initialDelayMillis, double backoffFactor) {
         if (backoffFactor <= 1.0) {
             throw new IllegalArgumentException("Backoff factor must be greater than 1.0");
         }
-        
+
         DefaultRetry config = new DefaultRetry(maxRetries, initialDelayMillis);
         config.setBackoffStrategy(new ExponentialBackoffStrategy(initialDelayMillis, backoffFactor));
         return config;
@@ -136,15 +136,15 @@ public class DefaultRetry implements RetryConfig {
     public static class ExponentialBackoffStrategy implements BackoffStrategy {
         private final long initialDelayMillis;
         private final double factor;
-        
+
         public ExponentialBackoffStrategy(long initialDelayMillis, double factor) {
             this.initialDelayMillis = initialDelayMillis;
             this.factor = factor;
         }
-        
+
         @Override
         public long getDelayMillis(int attempt) {
-            return (long)(initialDelayMillis * Math.pow(factor, attempt - 1));
+            return (long) (initialDelayMillis * Math.pow(factor, attempt - 1));
         }
     }
 }

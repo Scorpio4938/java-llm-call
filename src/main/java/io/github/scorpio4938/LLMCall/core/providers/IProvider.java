@@ -13,6 +13,8 @@ public interface IProvider {
      * Gets the provider name.
      *
      * @return The provider name
+     * 
+     * @since 1.0.2
      */
     String getProvider();
 
@@ -20,6 +22,8 @@ public interface IProvider {
      * Gets the provider API URL.
      *
      * @return The API URL
+     * 
+     * @since 1.0.2
      */
     String getUrl();
 
@@ -27,6 +31,8 @@ public interface IProvider {
      * Gets the API key for the provider.
      *
      * @return The API key
+     * 
+     * @since 1.0.2
      */
     String getKey();
 
@@ -34,6 +40,8 @@ public interface IProvider {
      * Gets the list of supported models.
      *
      * @return List of supported model names
+     * 
+     * @since 1.0.2
      */
     List<String> getModels();
 
@@ -43,6 +51,8 @@ public interface IProvider {
      * @param modelName The name of the model to retrieve
      * @return The model name if supported
      * @throws ModelNotSupportedException if the model is not supported
+     * 
+     * @since 1.0.2
      */
     String getModel(String modelName);
-} 
+}

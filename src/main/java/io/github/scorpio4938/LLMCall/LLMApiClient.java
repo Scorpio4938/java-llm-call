@@ -10,9 +10,9 @@ import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
 
 // import javax.annotation.Nullable;

@@ -2,11 +2,12 @@ package io.github.scorpio4938.LLMCall.core;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
+
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

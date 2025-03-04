@@ -5,12 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
@@ -104,7 +104,7 @@ public class RequestHandler {
      * Sends the request with retry based on builder configuration
      * 
      * @param requestBody The request body
-     * @param builder The request builder containing retry configuration
+     * @param builder     The request builder containing retry configuration
      * @return The response body as a string
      * @throws Exception if all retry attempts fail
      * 
@@ -131,7 +131,7 @@ public class RequestHandler {
                     Debugger.log("Final attempt failed: " + e.getMessage());
                     break;
                 }
-                
+
                 if (shouldRetry(e)) {
                     long delayMillis = retryConfig.getDelayForAttempt(attempt);
                     Debugger.log("Attempt %d failed: %s. Retrying in %dms...".formatted(
@@ -148,7 +148,7 @@ public class RequestHandler {
                 }
             }
         }
-        
+
         if (lastError instanceof LLMException) {
             throw (LLMException) lastError;
         }

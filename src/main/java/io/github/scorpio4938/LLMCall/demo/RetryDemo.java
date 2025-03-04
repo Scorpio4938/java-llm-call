@@ -1,9 +1,9 @@
 package io.github.scorpio4938.LLMCall.demo;
 
 import io.github.scorpio4938.LLMCall.LLMApiClient;
-import io.github.scorpio4938.LLMCall.config.DefaultRetry;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 
 import java.util.Map;
 
