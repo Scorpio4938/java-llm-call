@@ -1,5 +1,6 @@
-package io.github.scorpio4938.LLMCall.core.providers;
+package io.github.scorpio4938.LLMCall.service.exceptions.providers;
 
+import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.service.exceptions.NotSupportException;
 
 public class ProviderNotSupportedException extends NotSupportException {

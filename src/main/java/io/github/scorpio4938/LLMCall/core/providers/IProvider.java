@@ -2,6 +2,8 @@ package io.github.scorpio4938.LLMCall.core.providers;
 
 import java.util.List;
 
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.ModelNotSupportedException;
+
 /**
  * Interface for LLM providers.
  * Defines the contract that all provider implementations must follow.

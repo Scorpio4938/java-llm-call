@@ -1,7 +1,8 @@
-package io.github.scorpio4938.LLMCall.core.messages;
+package io.github.scorpio4938.LLMCall.service.exceptions.message;
 
-import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
 import java.net.http.HttpResponse;
+
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
 
 public class LLMResponseException extends LLMException {
     private final HttpResponse<String> response;

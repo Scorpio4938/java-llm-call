@@ -7,15 +7,15 @@ import com.google.gson.JsonObject;
 
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
-import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
-import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
-import io.github.scorpio4938.LLMCall.service.exceptions.LLMValidationException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
+import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
 
 import java.net.URI;
 import java.net.http.HttpClient;

@@ -1,4 +1,4 @@
-package io.github.scorpio4938.LLMCall.core.providers;
+package io.github.scorpio4938.LLMCall.service.exceptions.llm;
 
 import io.github.scorpio4938.LLMCall.service.exceptions.NotSupportException;
 

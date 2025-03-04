@@ -1,6 +1,7 @@
 package io.github.scorpio4938.LLMCall.core.providers;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.scorpio4938.LLMCall.service.exceptions.providers.ProviderNotSupportedException;
 
 import java.util.*;
 

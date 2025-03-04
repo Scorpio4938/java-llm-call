@@ -2,8 +2,8 @@ package io.github.scorpio4938.LLMCall.core.providers;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.scorpio4938.LLMCall.core.providers.ModelNotSupportedException;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.ModelNotSupportedException;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +13,7 @@ class ProviderTest {
     @Test
     void testConstructorAndGetters() {
         Provider provider = new Provider("TEST", "http://test.com", "test-key", List.of("model1", "model2"));
-        
+
         assertEquals("TEST", provider.getProvider());
         assertEquals("http://test.com", provider.getUrl());
         assertEquals("test-key", provider.getKey());
@@ -24,16 +24,15 @@ class ProviderTest {
     void testGetModels() {
         List<String> models = List.of("modelA", "modelB", "modelC");
         Provider provider = new Provider("TEST", "", "", models);
-        
+
         assertEquals(models, provider.getModels());
-        assertThrows(UnsupportedOperationException.class, () -> 
-            provider.getModels().add("new-model"));
+        assertThrows(UnsupportedOperationException.class, () -> provider.getModels().add("new-model"));
     }
 
     @Test
     void testGetModelValid() {
         Provider provider = new Provider("TEST", "", "", List.of("llama3", "mistral"));
-        
+
         assertEquals("llama3", provider.getModel("llama3"));
         assertEquals("mistral", provider.getModel("mistral"));
     }
@@ -41,10 +40,9 @@ class ProviderTest {
     @Test
     void testGetModelInvalid() {
         Provider provider = new Provider("TEST", "", "", List.of("deepseek"));
-        
-        Exception exception = assertThrows(ModelNotSupportedException.class, () -> 
-            provider.getModel("invalid-model"));
-        
+
+        Exception exception = assertThrows(ModelNotSupportedException.class, () -> provider.getModel("invalid-model"));
+
         assertEquals("Model not supported: invalid-model", exception.getMessage());
     }
-} 
+}

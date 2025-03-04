@@ -3,8 +3,8 @@ package io.github.scorpio4938.LLMCall.core.providers;
 import org.junit.jupiter.api.Test;
 
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
-import io.github.scorpio4938.LLMCall.core.providers.ProviderNotSupportedException;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
+import io.github.scorpio4938.LLMCall.service.exceptions.providers.ProviderNotSupportedException;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;

@@ -7,13 +7,13 @@ import io.github.scorpio4938.LLMCall.core.RequestHandler;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
-import io.github.scorpio4938.LLMCall.core.messages.LLMResponseException;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
+import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
-import io.github.scorpio4938.LLMCall.service.exceptions.LLMException;
 
 // import javax.annotation.Nullable;
 import java.net.URI;
@@ -86,7 +86,8 @@ public class LLMApiClient {
     }
 
     /**
-     * Calls the LLM with fallback support. Tries each model in sequence until one succeeds.
+     * Calls the LLM with fallback support. Tries each model in sequence until one
+     * succeeds.
      * 
      * @param builder The request builder containing models and configuration
      * @return The content of the first message in the response
@@ -98,13 +99,13 @@ public class LLMApiClient {
         LLMException lastError = null;
         StringBuilder errors = new StringBuilder();
         List<String> models = builder.getModels();
-        
+
         Debugger.log("Attempting call with " + models.size() + " model(s): " + String.join(", ", models));
-        
+
         for (int i = 0; i < models.size(); i++) {
             String model = models.get(i);
             try {
-                Debugger.log("Trying model " + model + " (" + (i+1) + "/" + models.size() + ")");
+                Debugger.log("Trying model " + model + " (" + (i + 1) + "/" + models.size() + ")");
                 String result = directCallLLM(builder.cloneWithModel(model));
                 Debugger.log("Model " + model + " succeeded");
                 return result;
@@ -112,8 +113,8 @@ public class LLMApiClient {
                 String errorMsg = "Model " + model + " failed: " + e.getMessage();
                 errors.append(errorMsg).append("\n");
                 Debugger.log(errorMsg);
-                lastError = e instanceof LLMException ? (LLMException) e 
-                    : new LLMException("Unexpected error", e);
+                lastError = e instanceof LLMException ? (LLMException) e
+                        : new LLMException("Unexpected error", e);
             }
         }
 
@@ -134,8 +135,8 @@ public class LLMApiClient {
             try {
                 return directCallLLM(builder);
             } catch (Exception e) {
-                throw e instanceof LLMException ? (LLMException) e 
-                    : new LLMException("Async call failed", e);
+                throw e instanceof LLMException ? (LLMException) e
+                        : new LLMException("Async call failed", e);
             }
         });
     }
