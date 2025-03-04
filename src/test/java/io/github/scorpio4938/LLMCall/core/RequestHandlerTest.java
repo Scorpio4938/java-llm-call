@@ -7,6 +7,7 @@ import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
 import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,8 @@ class RequestHandlerTest {
                 LLMRequestBuilder builder = new LLMRequestBuilder("test-model")
                                 .withData(Map.of("user", "Hello", "assistant", "Hi"))
                                 .withPrompt(new BasicPrompt())
-                                .withParams(Map.of("temperature", 0.7));
+                                .withParams(Map.of("temperature", 0.7))
+                                .build();
 
                 String json = handler.buildRequest(builder);
                 JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
@@ -60,7 +62,8 @@ class RequestHandlerTest {
         void shouldSortMessagesWithPromptFirst() {
                 LLMRequestBuilder builder = new LLMRequestBuilder("test-model")
                                 .withData(Map.of("user", "Hello", "assistant", "Hi"))
-                                .withPrompt(new BasicPrompt("system", "Be helpful"));
+                                .withPrompt(new BasicPrompt("system", "Be helpful"))
+                                .build();
 
                 String json = handler.buildRequest(builder);
                 JsonObject firstMessage = JsonParser.parseString(json)
@@ -74,10 +77,11 @@ class RequestHandlerTest {
 
         @Test
         void shouldThrowOnInvalidInput() {
-                assertThrows(IllegalArgumentException.class, () -> handler.buildRequest(new LLMRequestBuilder("")));
+                assertThrows(LLMValidationException.class,
+                                () -> handler.buildRequest(new LLMRequestBuilder("").build()));
 
-                assertThrows(IllegalArgumentException.class,
-                                () -> handler.buildRequest(new LLMRequestBuilder("model").withData(null)));
+                assertThrows(NullPointerException.class,
+                                () -> handler.buildRequest(new LLMRequestBuilder("model").withData(null).build()));
         }
 
         @Test

@@ -23,7 +23,8 @@ public class OllamaDemo {
 
             String response = client
                     .directCallLLM(new LLMRequestBuilder("deepseek-r1:1.5b")
-                            .withData(message));
+                            .withData(message)
+                            .build());
             System.out.println("LLM Response: " + response);
 
         } catch (Exception e) {

@@ -7,7 +7,7 @@ This is for the version 1.0.2
    - Make `DefaultRetry` fully implement `RetryConfig` interface (&#x2718; - No Need)
    - Ensure all interface methods have proper Javadocs (&#x2714;)
 
-2. Simplify builder patterns:
+2. Simplify builder patterns: (&#x2714;)
    - Remove redundant parameter validation in builder methods
    - Add null-safe method chaining
 

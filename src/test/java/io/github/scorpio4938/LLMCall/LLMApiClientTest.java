@@ -8,6 +8,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.providers.Providers;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,7 +109,9 @@ public class LLMApiClientTest {
     @Test
     public void testBasicCall() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.directCallLLM(new LLMRequestBuilder("test-model").withData(data));
+        String result = client.directCallLLM(new LLMRequestBuilder("test-model")
+                .withData(data)
+                .build());
         assertEquals("Hello!", result);
     }
 
@@ -117,14 +120,17 @@ public class LLMApiClientTest {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.directCallLLM(new LLMRequestBuilder("test-model")
                 .withData(data)
-                .withParams(Map.of("max_tokens", 50, "temperature", 0.7)));
+                .withParams(Map.of("max_tokens", 50, "temperature", 0.7))
+                .build());
         assertEquals("Hello!", result);
     }
 
     @Test
     public void testInvalidInput() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            client.directCallLLM(new LLMRequestBuilder("").withData(Map.of("role", "user")));
+        assertThrows(LLMValidationException.class, () -> {
+            client.directCallLLM(new LLMRequestBuilder("")
+                    .withData(Map.of("role", "user"))
+                    .build());
         });
     }
 
@@ -163,8 +169,11 @@ public class LLMApiClientTest {
         DefaultRetry retryConfig = new DefaultRetry(1, 50, TimeUnit.MILLISECONDS);
 
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        String result = client.callLLM(new LLMRequestBuilder("bad-model").withData(data)
-                .withFallback("good-model"));
+        String result = client.callLLM(new LLMRequestBuilder("bad-model")
+                .withData(data)
+                .withPrompt(new BasicPrompt())
+                .withFallback("good-model")
+                .build());
 
         assertEquals("Hello!", result);
     }
@@ -203,7 +212,9 @@ public class LLMApiClientTest {
     @Test
     public void testAsyncCall() throws Exception {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
-        CompletableFuture<String> future = client.asyncCallLLM(new LLMRequestBuilder("test-model").withData(data));
+        CompletableFuture<String> future = client.asyncCallLLM(new LLMRequestBuilder("test-model")
+                .withData(data)
+                .build());
 
         String result = future.get(5, TimeUnit.SECONDS);
         assertEquals("Hello!", result);
@@ -216,7 +227,8 @@ public class LLMApiClientTest {
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
         String result = client.directCallLLM(new LLMRequestBuilder("retry-model")
                 .withData(data)
-                .withRetryConfig(retryConfig));
+                .withRetryConfig(retryConfig)
+                .build());
         assertEquals("Hello!", result);
         assertEquals(3, retryCounter.get(), "Should make 3 attempts");
     }
@@ -229,7 +241,8 @@ public class LLMApiClientTest {
         assertThrows(Exception.class, () -> {
             client.directCallLLM(new LLMRequestBuilder("always-fail-model")
                     .withData(data)
-                    .withRetryConfig(retryConfig));
+                    .withRetryConfig(retryConfig)
+                    .build());
         });
         assertEquals(2, alwaysFailCounter.get(), "Should make 2 attempts (initial + 1 retry)");
     }
@@ -238,7 +251,8 @@ public class LLMApiClientTest {
     public void testBasicPrompt() throws Exception {
         String result = client.directCallLLM(new LLMRequestBuilder("test-model")
                 .withData(Map.of("user", "Hi"))
-                .withPrompt(new BasicPrompt()));
+                .withPrompt(new BasicPrompt())
+                .build());
         assertEquals("Hello!", result);
     }
 
@@ -247,9 +261,11 @@ public class LLMApiClientTest {
         DefaultRetry retryConfig = new DefaultRetry(1, 50, TimeUnit.MILLISECONDS);
         Map<String, String> data = Map.of("role", "user", "content", "Hi");
 
-        String result = client.callLLM(new LLMRequestBuilder("test-model").withData(data)
+        String result = client.callLLM(new LLMRequestBuilder("test-model")
+                .withData(data)
                 .withPrompt(new BasicPrompt())
-                .withRetryConfig(retryConfig));
+                .withRetryConfig(retryConfig)
+                .build());
         assertEquals("Hello!", result);
     }
 }

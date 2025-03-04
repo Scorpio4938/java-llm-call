@@ -19,26 +19,30 @@ import io.github.scorpio4938.LLMCall.service.debug.Debugger;
  * Example usage:
  * 
  * <pre>{@code
- * LLMRequestBuilder builder = new LLMRequestBuilder("gpt-4")
+ * LLMRequest request = new LLMRequestBuilder("gpt-4")
  *         .withData(messageMap)
  *         .withMaxTokens(100)
- *         .withPrompt(new BasicPrompt())
- *         .withTemperature(0.7);
+ *         .withPrompt(prompt)
+ *         .withTemperature(0.7)
+ *         .build();
  * }</pre>
  * 
  * @since 1.0.2
  */
 public class LLMRequestBuilder {
-    private final List<String> models = new ArrayList<>();
+    private final List<String> models;
     private Map<String, String> data;
-    private final Map<String, Object> params = new HashMap<>();
+    private final Map<String, Object> params;
     private Prompt prompt;
-    private DefaultRetry retryConfig = new DefaultRetry(); // Default retry config
+    private DefaultRetry retryConfig;
+    private boolean isBuilt;
 
     public LLMRequestBuilder(String model) {
-        Objects.requireNonNull(model, "Model cannot be null");
-        models.add(model);
-        this.data = Map.of();
+        this.models = new ArrayList<>();
+        this.models.add(Objects.requireNonNull(model, "Model cannot be null"));
+        this.data = new HashMap<>();
+        this.params = new HashMap<>();
+        this.retryConfig = new DefaultRetry();
     }
 
     /**
@@ -50,7 +54,8 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withData(Map<String, String> data) {
-        this.data = data;
+        checkNotBuilt();
+        this.data = new HashMap<>(Objects.requireNonNull(data, "Data map cannot be null"));
         return this;
     }
 
@@ -63,7 +68,8 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withPrompt(Prompt prompt) {
-        this.prompt = prompt;
+        checkNotBuilt();
+        this.prompt = Objects.requireNonNull(prompt, "Prompt cannot be null");
         return this;
     }
 
@@ -76,9 +82,7 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withMaxTokens(int maxTokens) {
-        if (maxTokens <= 0) {
-            throw new IllegalArgumentException("maxTokens must be positive");
-        }
+        checkNotBuilt();
         params.put("max_tokens", maxTokens);
         return this;
     }
@@ -92,9 +96,7 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withTemperature(double temperature) {
-        if (temperature < 0 || temperature > 2) {
-            throw new IllegalArgumentException("Temperature must be between 0 and 2");
-        }
+        checkNotBuilt();
         params.put("temperature", temperature);
         return this;
     }
@@ -108,9 +110,7 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withTopP(double topP) {
-        if (topP < 0 || topP > 1) {
-            throw new IllegalArgumentException("top_p must be between 0 and 1");
-        }
+        checkNotBuilt();
         params.put("top_p", topP);
         return this;
     }
@@ -125,22 +125,24 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withCustomParam(String key, Object value) {
-        Objects.requireNonNull(key, "parameter key cannot be null");
-        params.put(key, value);
+        checkNotBuilt();
+        params.put(Objects.requireNonNull(key, "Parameter key cannot be null"),
+                Objects.requireNonNull(value, "Parameter value cannot be null"));
         return this;
     }
 
     /**
      * Set a map of parameters for the request
      * 
-     * @param params The parameters to set
+     * @param newParams The parameters to set
      * @return The current builder
      * 
      * @since 1.0.2
      */
-    public LLMRequestBuilder withParams(Map<String, Object> params) {
-        params.forEach(
-                (key, value) -> this.params.put(key, Objects.requireNonNull(value, "Parameter value cannot be null")));
+    public LLMRequestBuilder withParams(Map<String, Object> newParams) {
+        checkNotBuilt();
+        Objects.requireNonNull(newParams, "Parameters map cannot be null")
+                .forEach(this::withCustomParam);
         return this;
     }
 
@@ -153,7 +155,11 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withFallback(String... fallbackModels) {
-        models.addAll(Arrays.asList(fallbackModels));
+        checkNotBuilt();
+        Objects.requireNonNull(fallbackModels, "Fallback models cannot be null");
+        Arrays.stream(fallbackModels)
+                .filter(Objects::nonNull)
+                .forEach(models::add);
         return this;
     }
 
@@ -166,10 +172,45 @@ public class LLMRequestBuilder {
      * @since 1.0.2
      */
     public LLMRequestBuilder withRetryConfig(DefaultRetry retryConfig) {
+        checkNotBuilt();
         this.retryConfig = Objects.requireNonNull(retryConfig, "RetryConfig cannot be null");
         return this;
     }
 
+    public LLMRequestBuilder build() {
+        validate();
+        isBuilt = true;
+        return this;
+    }
+
+    private void validate() {
+        if (models.isEmpty()) {
+            throw new IllegalStateException("At least one model must be specified");
+        }
+        if (params.containsKey("max_tokens") && (int) params.get("max_tokens") <= 0) {
+            throw new IllegalArgumentException("maxTokens must be positive");
+        }
+        if (params.containsKey("temperature")) {
+            double temp = (double) params.get("temperature");
+            if (temp < 0 || temp > 2) {
+                throw new IllegalArgumentException("Temperature must be between 0 and 2");
+            }
+        }
+        if (params.containsKey("top_p")) {
+            double topP = (double) params.get("top_p");
+            if (topP < 0 || topP > 1) {
+                throw new IllegalArgumentException("top_p must be between 0 and 1");
+            }
+        }
+    }
+
+    private void checkNotBuilt() {
+        if (isBuilt) {
+            throw new IllegalStateException("Builder has already been built");
+        }
+    }
+
+    // Getters return immutable copies
     public DefaultRetry getRetryConfig() {
         return retryConfig;
     }
@@ -183,11 +224,11 @@ public class LLMRequestBuilder {
     }
 
     public Map<String, String> getData() {
-        return data;
+        return Collections.unmodifiableMap(data);
     }
 
     public Map<String, Object> getParams() {
-        return Collections.unmodifiableMap(new HashMap<>(params));
+        return Collections.unmodifiableMap(params);
     }
 
     public Prompt getPrompt() {
@@ -206,9 +247,9 @@ public class LLMRequestBuilder {
         LLMRequestBuilder clone = new LLMRequestBuilder(newModel)
                 .withData(this.data)
                 .withParams(this.params)
-                .withPrompt(this.prompt);
-        // Skip first model since we already set it in constructor
+                .withPrompt(this.prompt)
+                .withRetryConfig(this.retryConfig);
         models.stream().skip(1).forEach(m -> clone.withFallback(m));
-        return clone;
+        return clone.build();
     }
 }

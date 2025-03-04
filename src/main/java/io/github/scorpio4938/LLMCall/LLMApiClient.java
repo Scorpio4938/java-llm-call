@@ -5,30 +5,16 @@ import com.google.gson.GsonBuilder;
 
 import io.github.scorpio4938.LLMCall.core.RequestHandler;
 import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
-import io.github.scorpio4938.LLMCall.core.messages.LLMRequest;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
-import io.github.scorpio4938.LLMCall.core.messages.prompts.Prompt;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
-import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
-import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
-import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 
 // import javax.annotation.Nullable;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Simplified LLM API Client for making requests to language models.
