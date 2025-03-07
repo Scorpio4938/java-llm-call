@@ -8,6 +8,7 @@ import io.github.scorpio4938.LLMCall.core.builder.LLMRequestBuilder;
 import io.github.scorpio4938.LLMCall.core.messages.LLMResponse;
 import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
 
 // import javax.annotation.Nullable;
@@ -100,11 +101,12 @@ public class LLMApiClient {
                 errors.append(errorMsg).append("\n");
                 Debugger.log(errorMsg);
                 lastError = e instanceof LLMException ? (LLMException) e
-                        : new LLMException("Unexpected error", e);
+                        : new LLMException(LLMErrorCode.GENERAL_ERROR, "Unexpected error", e);
             }
         }
 
-        throw new LLMException("All models failed. Errors:\n" + errors.toString(), lastError);
+        throw new LLMException(LLMErrorCode.GENERAL_ERROR, "All models failed. Errors:\n" + errors.toString(),
+                lastError);
     }
 
     /**
@@ -122,7 +124,7 @@ public class LLMApiClient {
                 return directCallLLM(builder);
             } catch (Exception e) {
                 throw e instanceof LLMException ? (LLMException) e
-                        : new LLMException("Async call failed", e);
+                        : new LLMException(LLMErrorCode.GENERAL_ERROR, "Async call failed", e);
             }
         });
     }

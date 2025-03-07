@@ -13,9 +13,11 @@ import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.utils.MapSorter;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
 import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.RetryException;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -77,10 +79,10 @@ public class RequestHandler {
         Map<String, String> data = builder.getData();
 
         if (model == null || model.trim().isEmpty()) {
-            throw new LLMValidationException("Model name cannot be empty");
+            throw new LLMValidationException("model", model);
         }
         if (data == null || data.isEmpty()) {
-            throw new LLMValidationException("Message data cannot be empty");
+            throw new LLMValidationException("data", data);
         }
     }
 
@@ -115,8 +117,10 @@ public class RequestHandler {
         DefaultRetry retryConfig = builder.getRetryConfig();
         HttpRequest request = buildHttpRequest(requestBody, retryConfig.getConnectionTimeout());
         Exception lastError = null;
+        int attemptsMade = 0;
 
         for (int attempt = 1; attempt <= retryConfig.getMaxRetries() + 1; attempt++) {
+            attemptsMade = attempt;
             boolean isLastAttempt = attempt > retryConfig.getMaxRetries();
             try {
                 Debugger.log("Attempt %d/%d to: %s".formatted(
@@ -140,7 +144,7 @@ public class RequestHandler {
                         Thread.sleep(delayMillis);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new LLMException("Retry interrupted", ie);
+                        throw new LLMException(LLMErrorCode.GENERAL_ERROR, "Retry interrupted", ie);
                     }
                 } else {
                     Debugger.log("Non-retryable error: " + e.getMessage());
@@ -149,10 +153,18 @@ public class RequestHandler {
             }
         }
 
-        if (lastError instanceof LLMException) {
-            throw (LLMException) lastError;
+        boolean retriesExhausted = attemptsMade == (retryConfig.getMaxRetries() + 1);
+        if (retriesExhausted) {
+            throw new RetryException(
+                    retryConfig.getMaxRetries(),
+                    retryConfig.getDelayForAttempt(retryConfig.getMaxRetries()),
+                    lastError);
+        } else {
+            if (lastError instanceof LLMException) {
+                throw (LLMException) lastError;
+            }
+            throw new LLMException(LLMErrorCode.GENERAL_ERROR, "Request failed after retries", lastError);
         }
-        throw new LLMException("Request failed after retries", lastError);
     }
 
     private HttpRequest buildHttpRequest(String requestBody, Duration timeout) {
@@ -203,7 +215,10 @@ public class RequestHandler {
 
     private void validateResponse(HttpResponse<String> response) {
         if (response.statusCode() >= 400) {
-            throw new LLMResponseException(response);
+            throw new LLMResponseException(
+                    "HTTP error: " + response.statusCode(),
+                    response.statusCode(),
+                    response.body());
         }
     }
 }

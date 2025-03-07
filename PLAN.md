@@ -11,10 +11,11 @@ This is for the version 1.0.2
    - Remove redundant parameter validation in builder methods
    - Add null-safe method chaining
 
-3. Error handling unification:
+3. Error handling unification: (&#x2714;)
    - Update base `LLMException` with error code enum
    - Deprecate `NotSupportException` in favor of standard exceptions
    - Add global exception handler configuration
+   - Update the exceptions with params to their specific context
 
 ## API Surface Improvements
 1. Streamline client entry points:

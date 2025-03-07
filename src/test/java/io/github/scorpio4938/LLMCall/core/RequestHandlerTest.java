@@ -150,9 +150,11 @@ class RequestHandlerTest {
         @Test
         void shouldClassifyErrorsCorrectly() throws Exception {
                 // Create different exception types
-                LLMResponseException rateLimitException = new LLMResponseException("Rate limit", 429);
-                LLMResponseException serverErrorException = new LLMResponseException("Server error", 503);
-                LLMResponseException clientErrorException = new LLMResponseException("Bad request", 400);
+                LLMResponseException rateLimitException = new LLMResponseException("Rate limit", 429,
+                                "Rate limit exceeded");
+                LLMResponseException serverErrorException = new LLMResponseException("Server error", 503,
+                                "Server error");
+                LLMResponseException clientErrorException = new LLMResponseException("Bad request", 400, "Bad request");
                 IOException networkException = new IOException("Network error");
 
                 // Test error classification using reflection to access private method
