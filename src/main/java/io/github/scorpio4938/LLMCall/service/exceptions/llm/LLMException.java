@@ -1,11 +1,28 @@
 package io.github.scorpio4938.LLMCall.service.exceptions.llm;
 
 public class LLMException extends RuntimeException {
-    public LLMException(String message) {
-        super(message);
+    private final LLMErrorCode errorCode;
+
+    public LLMException(LLMErrorCode errorCode) {
+        super(errorCode.getDefaultMessage());
+        this.errorCode = errorCode;
     }
 
-    public LLMException(String message, Throwable cause) {
+    public LLMException(LLMErrorCode errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
+    public LLMException(LLMErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);
+        this.errorCode = errorCode;
+    }
+
+    public LLMErrorCode getErrorCode() {
+        return errorCode;
+    }
+
+    public int getCode() {
+        return errorCode.getCode();
     }
 }

@@ -1,9 +1,11 @@
 package io.github.scorpio4938.LLMCall.service.exceptions.llm;
 
-import io.github.scorpio4938.LLMCall.service.exceptions.NotSupportException;
+public class ModelNotSupportedException extends LLMException {
+    public ModelNotSupportedException(String message) {
+        super(LLMErrorCode.MODEL_NOT_SUPPORTED, message);
+    }
 
-public class ModelNotSupportedException extends NotSupportException {
-    public ModelNotSupportedException(String modelName) {
-        super("Model not supported: " + modelName);
+    public ModelNotSupportedException(String message, Throwable cause) {
+        super(LLMErrorCode.MODEL_NOT_SUPPORTED, message, cause);
     }
 }

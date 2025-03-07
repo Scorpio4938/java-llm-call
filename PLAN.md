@@ -12,7 +12,7 @@ This is for the version 1.0.2
    - Add null-safe method chaining
 
 3. Error handling unification:
-   - Create base `LLMException` with error code enum
+   - Update base `LLMException` with error code enum
    - Deprecate `NotSupportException` in favor of standard exceptions
    - Add global exception handler configuration
 

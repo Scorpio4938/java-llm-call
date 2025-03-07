@@ -1,15 +1,14 @@
 package io.github.scorpio4938.LLMCall.service.exceptions.providers;
 
-import io.github.scorpio4938.LLMCall.core.providers.Provider;
-import io.github.scorpio4938.LLMCall.service.exceptions.NotSupportException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
 
-public class ProviderNotSupportedException extends NotSupportException {
-    public ProviderNotSupportedException(String providerName) {
-        super("Provider not supported: " + providerName);
+public class ProviderNotSupportedException extends LLMException {
+    public ProviderNotSupportedException(String message) {
+        super(LLMErrorCode.PROVIDER_NOT_SUPPORTED, message);
     }
 
-    public ProviderNotSupportedException(Provider provider) {
-        super("Provider not supported: " + provider.getProvider());
+    public ProviderNotSupportedException(String message, Throwable cause) {
+        super(LLMErrorCode.PROVIDER_NOT_SUPPORTED, message, cause);
     }
-
 }
