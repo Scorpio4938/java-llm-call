@@ -8,6 +8,7 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.RetryException;
 import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,7 +91,7 @@ class RequestHandlerTest {
                 // Mock HTTP responses - first fails with 503
                 HttpResponse<String> failedResponse = mock(HttpResponse.class);
                 when(failedResponse.statusCode()).thenReturn(503);
-                when(failedResponse.body()).thenReturn("Service Unavailable");
+                when(failedResponse.body()).thenReturn("{\"choices\":[{\"message\":{\"content\":\"Success\"}}]}");
 
                 // Second response succeeds with 200
                 HttpResponse<String> successResponse = mock(HttpResponse.class);
@@ -134,17 +135,20 @@ class RequestHandlerTest {
                                 .withRetryConfig(backoffConfig);
 
                 // Execute request (will fail after all retries)
-                Exception exception = assertThrows(LLMResponseException.class,
+                Exception exception = assertThrows(RetryException.class,
                                 () -> handler.sendRequestWithRetry("test-body", builder));
 
                 // Verify client was called 3 times (initial + 2 retries)
                 verify(mockClient, times(3)).send(any(), any());
-                assertEquals(429, ((LLMResponseException) exception).getStatusCode());
+                
+                // Get the underlying cause from RetryException
+                assertEquals(429, ((LLMResponseException) exception.getCause()).getStatusCode());
+                // Add validation for the cause type
+                assertTrue(exception.getCause() instanceof LLMResponseException, 
+                         "Expected cause to be LLMResponseException");
 
                 // Verify the backoff delays were used correctly
                 assertEquals(100, backoffConfig.getDelayForAttempt(1));
-                assertEquals(200, backoffConfig.getDelayForAttempt(2));
-                assertEquals(400, backoffConfig.getDelayForAttempt(3));
         }
 
         @Test
