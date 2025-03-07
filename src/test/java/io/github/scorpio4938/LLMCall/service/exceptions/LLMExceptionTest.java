@@ -3,38 +3,52 @@ package io.github.scorpio4938.LLMCall.service.exceptions;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.*;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMResponseException;
 import io.github.scorpio4938.LLMCall.service.exceptions.providers.ProviderNotSupportedException;
+import io.github.scorpio4938.LLMCall.service.exceptions.retry.RetryException;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LLMExceptionTest {
 
+    private void assertNotSupportedException(NotSupportedException exception, LLMErrorCode expectedCode,
+            String expectedName) {
+        assertEquals(expectedName, exception.getUnsupportedValue());
+        assertEquals(expectedCode, exception.getErrorCode());
+        assertEquals(expectedCode.getCode(), exception.getCode());
+    }
+
+    private void assertValidationException(LLMValidationException exception, String expectedField,
+            Object expectedValue) {
+        assertEquals(expectedField, exception.getFieldName());
+        assertEquals(expectedValue, exception.getInvalidValue());
+        assertEquals(LLMErrorCode.VALIDATION_ERROR, exception.getErrorCode());
+    }
+
+    private void assertRetryExceptionProperties(RetryException exception, int expectedAttempts, long expectedDelay) {
+        assertEquals(LLMErrorCode.RETRY_ERROR, exception.getErrorCode());
+        assertEquals(expectedAttempts, exception.getRetryAttempts());
+        assertEquals(expectedDelay, exception.getRetryDelay());
+    }
+
     @Test
     void testLLMValidationException() {
         String field = "temperature";
         Object value = 2.5;
-        LLMValidationException exception = new LLMValidationException(field, value);
-
-        assertEquals(field, exception.getFieldName());
-        assertEquals(value, exception.getInvalidValue());
-        assertEquals(LLMErrorCode.VALIDATION_ERROR, exception.getErrorCode());
+        assertValidationException(new LLMValidationException(field, value), field, value);
     }
 
     @Test
     void testModelNotSupportedException() {
         String model = "GPT-5";
-        NotSupportedException exception = new NotSupportedException(LLMErrorCode.MODEL_NOT_SUPPORTED, model);
-
-        assertEquals(model, exception.getName());
-        assertEquals(LLMErrorCode.MODEL_NOT_SUPPORTED, exception.getErrorCode());
+        assertNotSupportedException(new ModelNotSupportedException(model),
+                LLMErrorCode.MODEL_NOT_SUPPORTED, model);
     }
 
     @Test
     void testProviderNotSupportedException() {
         String provider = "CustomProvider";
-        NotSupportedException exception = new NotSupportedException(LLMErrorCode.PROVIDER_NOT_SUPPORTED, provider);
-
-        assertEquals(provider, exception.getName());
-        assertEquals(LLMErrorCode.PROVIDER_NOT_SUPPORTED, exception.getErrorCode());
+        assertNotSupportedException(new ProviderNotSupportedException(provider),
+                LLMErrorCode.PROVIDER_NOT_SUPPORTED, provider);
     }
 
     @Test
@@ -59,8 +73,7 @@ public class LLMExceptionTest {
         Throwable cause = new IllegalArgumentException();
         LLMValidationException exception = new LLMValidationException(field, value, cause);
 
-        assertEquals(field, exception.getFieldName());
-        assertEquals(value, exception.getInvalidValue());
+        assertValidationException(exception, field, value);
         assertEquals(cause, exception.getCause());
     }
 
@@ -73,9 +86,8 @@ public class LLMExceptionTest {
         RetryException exception = new RetryException(attempts, delay);
         RetryException exceptionWithCause = new RetryException(attempts, delay, cause);
 
-        assertEquals(LLMErrorCode.RETRY_ERROR, exception.getErrorCode());
-        assertEquals(attempts, exception.getRetryAttempts());
-        assertEquals(delay, exception.getRetryDelay());
+        assertRetryExceptionProperties(exception, attempts, delay);
+        assertRetryExceptionProperties(exceptionWithCause, attempts, delay);
         assertEquals(cause, exceptionWithCause.getCause());
     }
 }

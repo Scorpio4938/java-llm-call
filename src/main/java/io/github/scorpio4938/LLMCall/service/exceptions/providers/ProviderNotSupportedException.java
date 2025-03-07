@@ -13,6 +13,6 @@ public class ProviderNotSupportedException extends NotSupportedException {
     }
     
     public String getProviderName() { 
-        return super.getName(); 
+        return super.getUnsupportedValue(); 
     }
 }

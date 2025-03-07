@@ -16,8 +16,8 @@ import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
-import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
-import io.github.scorpio4938.LLMCall.service.exceptions.llm.RetryException;
+import io.github.scorpio4938.LLMCall.service.exceptions.retry.RetryException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMResponseException;
 
 import java.net.URI;
 import java.net.http.HttpClient;

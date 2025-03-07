@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.NotSupportedException;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.ModelNotSupportedException;
 
 /**
  * Interface class for llm providers.
@@ -49,6 +50,6 @@ public class Provider implements IProvider {
                 return model;
             }
         }
-        throw new NotSupportedException(LLMErrorCode.MODEL_NOT_SUPPORTED, modelName);
+        throw new ModelNotSupportedException(modelName);
     }
 }

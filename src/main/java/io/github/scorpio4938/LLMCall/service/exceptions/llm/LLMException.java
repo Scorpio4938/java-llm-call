@@ -25,4 +25,12 @@ public class LLMException extends RuntimeException {
     public int getCode() {
         return errorCode.getCode();
     }
+
+    @Override
+    public String toString() {
+        return String.format("[%d] %s: %s", 
+            errorCode.getCode(), 
+            this.getClass().getSimpleName(),
+            getMessage());
+    }
 }

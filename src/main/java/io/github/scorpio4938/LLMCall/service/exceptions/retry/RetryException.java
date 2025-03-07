@@ -1,4 +1,7 @@
-package io.github.scorpio4938.LLMCall.service.exceptions.llm;
+package io.github.scorpio4938.LLMCall.service.exceptions.retry;
+
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
 
 public class RetryException extends LLMException {
     private final int retryAttempts;
@@ -27,5 +30,13 @@ public class RetryException extends LLMException {
 
     public long getRetryDelay() {
         return retryDelay;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s (Attempts: %d, Delay: %dms)", 
+            super.toString(), 
+            retryAttempts, 
+            retryDelay);
     }
 } 

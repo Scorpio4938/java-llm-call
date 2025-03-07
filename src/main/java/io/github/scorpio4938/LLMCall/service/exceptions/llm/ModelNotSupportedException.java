@@ -10,6 +10,6 @@ public class ModelNotSupportedException extends NotSupportedException {
     }
     
     public String getModelName() { 
-        return super.getName(); 
+        return super.getUnsupportedValue(); 
     }
 }

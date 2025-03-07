@@ -8,8 +8,8 @@ import io.github.scorpio4938.LLMCall.core.messages.prompts.BasicPrompt;
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
 import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMValidationException;
-import io.github.scorpio4938.LLMCall.service.exceptions.llm.RetryException;
-import io.github.scorpio4938.LLMCall.service.exceptions.message.LLMResponseException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMResponseException;
+import io.github.scorpio4938.LLMCall.service.exceptions.retry.RetryException;
 import io.github.scorpio4938.LLMCall.service.retry.RetryableErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -140,16 +140,15 @@ class RequestHandlerTest {
 
                 // Verify client was called 3 times (initial + 2 retries)
                 verify(mockClient, times(3)).send(any(), any());
-                
-                // Get the underlying cause from RetryException
-                assertEquals(429, ((LLMResponseException) exception.getCause()).getStatusCode());
-                // Add validation for the cause type
-                assertTrue(exception.getCause() instanceof LLMResponseException, 
-                         "Expected cause to be LLMResponseException");
 
-                // Verify the backoff delays were used correctly
-                assertEquals(100, backoffConfig.getDelayForAttempt(1));
-        }
+                // Get the underlying cause from RetryException
+                RetryException retryException = (RetryException) exception;
+                assertEquals(2, retryException.getRetryAttempts());
+                // Verify the cause type and status code
+                assertTrue(retryException.getCause() instanceof LLMResponseException,
+                                "Expected cause to be LLMResponseException");
+                assertEquals(429, ((LLMResponseException) retryException.getCause()).getStatusCode());
+            }
 
         @Test
         void shouldClassifyErrorsCorrectly() throws Exception {

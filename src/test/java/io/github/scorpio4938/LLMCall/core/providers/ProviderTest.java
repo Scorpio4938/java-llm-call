@@ -40,11 +40,11 @@ class ProviderTest {
     @Test
     void testGetModelInvalid() {
         Provider provider = new Provider("TEST", "", "", List.of("deepseek"));
-        
-        Exception exception = assertThrows(NotSupportedException.class, 
-            () -> provider.getModel("invalid-model"));
-        
+
+        Exception exception = assertThrows(NotSupportedException.class,
+                () -> provider.getModel("invalid-model"));
+
         assertEquals("MODEL 'invalid-model' is not supported", exception.getMessage());
-        assertEquals("invalid-model", ((NotSupportedException) exception).getName());
+        assertEquals("invalid-model", ((NotSupportedException) exception).getUnsupportedValue());
     }
 }
