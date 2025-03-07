@@ -17,6 +17,14 @@ This is for the version 1.0.2
    - Add global exception handler configuration
    - Update the exceptions with params to their specific context
 
+4. Refactor Exceptions: (&#x2714;)
+   - Constructor Consolidation - Reduce duplicate constructor patterns
+   - Simplify the logics
+   - Hierarchy Improvements:
+      - Create clearer inheritance structure
+   - Remove redundent code / logics
+   - Refactor all the eceptions for better simplicity, maintainability, etc. (if necessary)
+
 ## API Surface Improvements
 1. Streamline client entry points:
    - Create fluent factory methods for `LLMApiClient`

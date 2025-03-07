@@ -3,7 +3,7 @@ package io.github.scorpio4938.LLMCall.core.providers;
 import org.junit.jupiter.api.Test;
 
 import io.github.scorpio4938.LLMCall.core.providers.Provider;
-import io.github.scorpio4938.LLMCall.service.exceptions.llm.ModelNotSupportedException;
+import io.github.scorpio4938.LLMCall.service.exceptions.llm.NotSupportedException;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,10 +41,10 @@ class ProviderTest {
     void testGetModelInvalid() {
         Provider provider = new Provider("TEST", "", "", List.of("deepseek"));
         
-        Exception exception = assertThrows(ModelNotSupportedException.class, 
+        Exception exception = assertThrows(NotSupportedException.class, 
             () -> provider.getModel("invalid-model"));
         
-        assertEquals("Model 'invalid-model' is not supported", exception.getMessage());
-        assertEquals("invalid-model", ((ModelNotSupportedException) exception).getModelName());
+        assertEquals("MODEL 'invalid-model' is not supported", exception.getMessage());
+        assertEquals("invalid-model", ((NotSupportedException) exception).getName());
     }
 }

@@ -161,6 +161,10 @@ public class RequestHandler {
                     lastError);
         } else {
             if (lastError instanceof LLMException) {
+                LLMErrorCode code = ((LLMException) lastError).getErrorCode();
+                if (code == LLMErrorCode.RATE_LIMIT) {
+                    // Handle rate limit specifically
+                }
                 throw (LLMException) lastError;
             }
             throw new LLMException(LLMErrorCode.GENERAL_ERROR, "Request failed after retries", lastError);

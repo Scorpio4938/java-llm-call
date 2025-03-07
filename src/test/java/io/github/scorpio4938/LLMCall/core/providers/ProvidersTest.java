@@ -42,7 +42,7 @@ class ProvidersTest {
             providers.getProvider("INVALID_PROVIDER");
         });
 
-        assertEquals("Provider 'INVALID_PROVIDER' is not supported", exception.getMessage());
+        assertEquals("PROVIDER 'INVALID_PROVIDER' is not supported", exception.getMessage());
     }
 
     @Test

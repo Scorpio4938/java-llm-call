@@ -1,19 +1,15 @@
 package io.github.scorpio4938.LLMCall.service.exceptions.llm;
 
-public class ModelNotSupportedException extends LLMException {
-    private final String modelName;
-
+public class ModelNotSupportedException extends NotSupportedException {
     public ModelNotSupportedException(String modelName) {
-        super(LLMErrorCode.MODEL_NOT_SUPPORTED, 
-            String.format("Model '%s' is not supported", modelName));
-        this.modelName = modelName;
+        super(LLMErrorCode.MODEL_NOT_SUPPORTED, modelName);
     }
 
     public ModelNotSupportedException(String modelName, Throwable cause) {
-        super(LLMErrorCode.MODEL_NOT_SUPPORTED, 
-            String.format("Model '%s' is not supported", modelName), cause);
-        this.modelName = modelName;
+        super(LLMErrorCode.MODEL_NOT_SUPPORTED, modelName, cause);
     }
-
-    public String getModelName() { return modelName; }
+    
+    public String getModelName() { 
+        return super.getName(); 
+    }
 }
