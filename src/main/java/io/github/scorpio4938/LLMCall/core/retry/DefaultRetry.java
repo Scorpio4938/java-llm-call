@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * @since 1.0.2
  */
-public class DefaultRetry implements RetryConfig {
+public class DefaultRetry {
     private int maxRetries;
     private long retryDelayMillis;
     private Duration connectionTimeout;

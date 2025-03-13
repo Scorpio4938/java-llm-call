@@ -39,10 +39,12 @@ public class RequestHandler {
 
     private final IProvider provider;
     private final HttpClient client;
+    private final DefaultRetry retryConfig;
 
-    public RequestHandler(IProvider provider, HttpClient client) {
+    public RequestHandler(IProvider provider, HttpClient client, DefaultRetry retryConfig) {
         this.provider = Objects.requireNonNull(provider);
         this.client = Objects.requireNonNull(client);
+        this.retryConfig = retryConfig;
     }
 
     /**
@@ -114,7 +116,6 @@ public class RequestHandler {
      */
     public String sendRequestWithRetry(String requestBody, LLMRequestBuilder builder)
             throws LLMException {
-        DefaultRetry retryConfig = builder.getRetryConfig();
         HttpRequest request = buildHttpRequest(requestBody, retryConfig.getConnectionTimeout());
         Exception lastError = null;
         int attemptsMade = 0;
@@ -224,5 +225,17 @@ public class RequestHandler {
                     response.statusCode(),
                     response.body());
         }
+    }
+
+    public IProvider getProvider() {
+        return provider;
+    }
+
+    public Duration getTimeout() {
+        return client.connectTimeout().orElse(Duration.ofSeconds(30));
+    }
+
+    public DefaultRetry getRetryConfig() {
+        return retryConfig;
     }
 }

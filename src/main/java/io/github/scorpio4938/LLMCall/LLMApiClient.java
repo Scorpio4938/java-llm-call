@@ -10,12 +10,15 @@ import io.github.scorpio4938.LLMCall.core.providers.IProvider;
 import io.github.scorpio4938.LLMCall.service.debug.Debugger;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMErrorCode;
 import io.github.scorpio4938.LLMCall.service.exceptions.llm.LLMException;
+import io.github.scorpio4938.LLMCall.core.retry.DefaultRetry;
 
 // import javax.annotation.Nullable;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Simplified LLM API Client for making requests to language models.
@@ -26,6 +29,7 @@ public class LLMApiClient {
     private static final Gson GSON = new GsonBuilder().create();
 
     private final RequestHandler requestHandler;
+    private final ExecutorService asyncExecutor;
 
     /**
      * Constructs a new LLMApiClient with the specified provider.
@@ -36,20 +40,22 @@ public class LLMApiClient {
      * @since 1.0.0
      */
     public LLMApiClient(IProvider provider) {
-        this(provider, HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(30))
-                .build());
+        this(provider, Duration.ofSeconds(30), new DefaultRetry());
     }
 
     /**
      * Constructs a new LLMApiClient with custom HttpClient configuration.
      *
-     * @param provider   The LLM provider to use (must not be null)
-     * @param httpClient Custom HttpClient instance (must not be null)
-     * @throws IllegalArgumentException if provider or httpClient is null
+     * @param provider    The LLM provider to use (must not be null)
+     * @param timeout     Custom timeout configuration
+     * @param retryConfig Custom retry configuration
+     * @throws IllegalArgumentException if provider or timeout is null
      */
-    public LLMApiClient(IProvider provider, HttpClient httpClient) {
-        this.requestHandler = new RequestHandler(provider, httpClient);
+    public LLMApiClient(IProvider provider, Duration timeout, DefaultRetry retryConfig) {
+        this.requestHandler = new RequestHandler(provider, HttpClient.newBuilder()
+                .connectTimeout(timeout)
+                .build(), retryConfig);
+        this.asyncExecutor = Executors.newCachedThreadPool();
     }
 
     /**
@@ -127,5 +133,27 @@ public class LLMApiClient {
                         : new LLMException(LLMErrorCode.GENERAL_ERROR, "Async call failed", e);
             }
         });
+    }
+
+    public LLMApiClient withTimeout(Duration timeout) {
+        return new LLMApiClient(
+                this.requestHandler.getProvider(),
+                timeout,
+                this.requestHandler.getRetryConfig());
+    }
+
+    public LLMApiClient withRetry(DefaultRetry retryConfig) {
+        return new LLMApiClient(
+                this.requestHandler.getProvider(),
+                this.requestHandler.getTimeout(),
+                retryConfig);
+    }
+
+    public CompletableFuture<String> asyncCall(LLMRequestBuilder request) {
+        return CompletableFuture.supplyAsync(() -> callLLM(request), asyncExecutor);
+    }
+
+    public static LLMApiClientBuilder builder() {
+        return new LLMApiClientBuilder();
     }
 }

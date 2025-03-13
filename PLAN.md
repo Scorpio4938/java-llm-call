@@ -25,11 +25,11 @@ This is for the version 1.0.2
    - Remove redundent code / logics
    - Refactor all the eceptions for better simplicity, maintainability, etc. (if necessary)
 
-_I've made this exceptions a terriable thing..._
+_I've made this exceptions terriable..._
 
 ## API Surface Improvements
 1. Streamline client entry points:
-   - Create fluent factory methods for `LLMApiClient`
+   - Create fluent factory methods for existed `LLMApiClient`
    - Add provider registry pattern for easier configuration
    - Simplify async call handling with CompletableFuture wrappers
 
