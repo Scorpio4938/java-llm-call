@@ -153,7 +153,11 @@ public class LLMApiClient {
         return CompletableFuture.supplyAsync(() -> callLLM(request), asyncExecutor);
     }
 
-    public static LLMApiClientBuilder builder() {
-        return new LLMApiClientBuilder();
+    public void setTimeout(Duration timeout) {
+        this.requestHandler.setTimeout(timeout);
+    }
+
+    public void setRetryConfig(DefaultRetry retryConfig) {
+        this.requestHandler.setRetryConfig(retryConfig);
     }
 }

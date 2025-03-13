@@ -28,7 +28,7 @@ This is for the version 1.0.2
 _I've made this exceptions terriable..._
 
 ## API Surface Improvements
-1. Streamline client entry points:
+1. Streamline client entry points: (&#x2714;)
    - Create fluent factory methods for existed `LLMApiClient`
    - Add provider registry pattern for easier configuration
    - Simplify async call handling with CompletableFuture wrappers

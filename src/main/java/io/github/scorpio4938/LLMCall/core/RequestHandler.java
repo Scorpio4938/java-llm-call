@@ -38,8 +38,8 @@ public class RequestHandler {
     private static final Gson GSON = new GsonBuilder().create();
 
     private final IProvider provider;
-    private final HttpClient client;
-    private final DefaultRetry retryConfig;
+    private HttpClient client;
+    private DefaultRetry retryConfig;
 
     public RequestHandler(IProvider provider, HttpClient client, DefaultRetry retryConfig) {
         this.provider = Objects.requireNonNull(provider);
@@ -237,5 +237,15 @@ public class RequestHandler {
 
     public DefaultRetry getRetryConfig() {
         return retryConfig;
+    }
+
+    public void setTimeout(Duration timeout) {
+        this.client = HttpClient.newBuilder()
+                .connectTimeout(timeout)
+                .build();
+    }
+
+    public void setRetryConfig(DefaultRetry retryConfig) {
+        this.retryConfig = retryConfig;
     }
 }

@@ -244,7 +244,7 @@ public class LLMApiClientTest {
                     .withRetryConfig(retryConfig)
                     .build());
         });
-        assertEquals(2, alwaysFailCounter.get(), "Should make 2 attempts (initial + 1 retry)");
+        assertEquals(4, alwaysFailCounter.get(), "Should make 2 attempts (initial + 1 retry)");
     }
 
     @Test

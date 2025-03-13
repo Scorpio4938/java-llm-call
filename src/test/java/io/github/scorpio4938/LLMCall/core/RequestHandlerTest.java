@@ -40,7 +40,7 @@ class RequestHandlerTest {
                 when(testProvider.getModel("test-model")).thenReturn("test-model");
 
                 mockClient = mock(HttpClient.class);
-                handler = new RequestHandler(testProvider, mockClient);
+                handler = new RequestHandler(testProvider, mockClient, new DefaultRetry());
         }
 
         @Test
